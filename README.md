@@ -17,13 +17,9 @@ A fully offline JSON editor with visualisation capabilities..
 
 ## Quick Start
 
-### For Offline/Airgapped Environments (Recommended)
+### For Offline/Airgapped Environments
 
-Simply open **`index-offline.html`** in Microsoft Edge or any modern browser. No internet connection required.
-
-### For Environments with Microsoft CDN Access
-
-Open **`index.html`** for a better editor experience using Monaco Editor (requires access to `cdnjs.cloudflare.com`).
+Simply open **`index.html`** in Microsoft Edge or any modern browser. No internet connection required.
 
 ## Usage Instructions
 
@@ -45,7 +41,7 @@ Open **`index.html`** for a better editor experience using Monaco Editor (requir
 ## Requirements
 
 - Modern web browser with ES6 support (Edge, Chrome, Firefox)
-- No internet connection needed (for `index-offline.html`)
+- No internet connection needed
 - No installation or server required
 - Can be emailed and run directly from desktop
 
