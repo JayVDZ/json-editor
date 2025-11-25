@@ -345,12 +345,23 @@
         }
 
         #json-editor {
-            padding-left: 60px;
-            position: relative;
+            position: absolute;
+            left: 60px;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            padding: 15px;
             z-index: 2;
             color: transparent;
             caret-color: #d4d4d4;
             background: transparent;
+            border: none;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            tab-size: 2;
         }
 
         #json-editor::selection {
@@ -638,6 +649,9 @@
             drawEdges() {
                 const svgNS = 'http://www.w3.org/2000/svg';
 
+                // Clear existing edges first
+                this.svgContainer.innerHTML = '';
+
                 // Calculate SVG size based on node positions
                 let maxX = 0, maxY = 0;
                 this.nodes.forEach(node => {
@@ -668,6 +682,9 @@
             }
 
             drawNodes() {
+                // Clear existing nodes first
+                this.container.innerHTML = '';
+
                 this.nodes.forEach(node => {
                     const nodeEl = document.createElement('div');
                     nodeEl.className = 'node';
