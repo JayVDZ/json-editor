@@ -1,0 +1,58 @@
+{
+  "company": {
+    "name": "Tech Corp",
+    "founded": 2020,
+    "departments": [
+      {
+        "name": "Engineering",
+        "employees": 50,
+        "budget": 5000000,
+        "projects": [
+          {
+            "id": "proj-001",
+            "title": "JSON Editor",
+            "status": "active",
+            "technologies": ["JavaScript", "HTML5", "CSS3"]
+          },
+          {
+            "id": "proj-002",
+            "title": "Data Visualizer",
+            "status": "planning",
+            "technologies": ["D3.js", "React"]
+          }
+        ]
+      },
+      {
+        "name": "Sales",
+        "employees": 25,
+        "budget": 2000000,
+        "regions": ["North America", "Europe", "Asia"]
+      }
+    ],
+    "headquarters": {
+      "address": "123 Tech Street",
+      "city": "San Francisco",
+      "country": "USA",
+      "coordinates": {
+        "latitude": 37.7749,
+        "longitude": -122.4194
+      }
+    }
+  },
+  "financial": {
+    "revenue": 10000000,
+    "expenses": 7000000,
+    "profit": 3000000,
+    "quarterly_breakdown": [
+      {"quarter": "Q1", "revenue": 2000000, "expenses": 1500000},
+      {"quarter": "Q2", "revenue": 2500000, "expenses": 1800000},
+      {"quarter": "Q3", "revenue": 2800000, "expenses": 1900000},
+      {"quarter": "Q4", "revenue": 2700000, "expenses": 1800000}
+    ]
+  },
+  "metadata": {
+    "last_updated": "2025-01-15T10:30:00Z",
+    "version": "2.1.0",
+    "format": "company-data-v2"
+  }
+}

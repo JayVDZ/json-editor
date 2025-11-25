@@ -1,0 +1,12 @@
+{
+  "name": "json-editor",
+  "version": "1.0.0",
+  "description": "Offline JSON editor with visualization, similar to JSONCrack",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": ["json", "editor", "visualization", "offline"],
+  "author": "",
+  "license": "MIT"
+}

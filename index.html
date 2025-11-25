@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        .header {
+            background: #262626;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3e3e3e;
+            height: 50px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #1177bb;
+        }
+
+        .btn-secondary {
+            background: #3e3e3e;
+        }
+
+        .btn-secondary:hover {
+            background: #4e4e4e;
+        }
+
+        .status {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status.valid {
+            background: #2d7d2d;
+            color: #a3e9a3;
+        }
+
+        .status.invalid {
+            background: #7d2d2d;
+            color: #e9a3a3;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 50px);
+        }
+
+        .editor-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #3e3e3e;
+        }
+
+        .panel-header {
+            background: #2d2d2d;
+            padding: 8px 15px;
+            border-bottom: 1px solid #3e3e3e;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .small-btn {
+            background: transparent;
+            color: #d4d4d4;
+            border: 1px solid #3e3e3e;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .small-btn:hover {
+            background: #3e3e3e;
+            border-color: #4e4e4e;
+        }
+
+        #editor-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .visualization-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+
+        #visualization-container {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            padding: 20px;
+        }
+
+        #graph-canvas {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        .resizer {
+            width: 4px;
+            background: #3e3e3e;
+            cursor: col-resize;
+            position: relative;
+        }
+
+        .resizer:hover {
+            background: #0e639c;
+        }
+
+        .node {
+            position: absolute;
+            background: #2d2d2d;
+            border: 2px solid #0e639c;
+            border-radius: 8px;
+            padding: 8px 12px;
+            min-width: 100px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .node:hover {
+            border-color: #1177bb;
+            box-shadow: 0 4px 12px rgba(14, 99, 156, 0.4);
+        }
+
+        .node-key {
+            font-weight: 600;
+            color: #4fc3f7;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .node-value {
+            color: #a3e9a3;
+            font-size: 11px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            word-break: break-word;
+        }
+
+        .node-type {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .edge {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .edge-line {
+            stroke: #4e4e4e;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .error-message {
+            background: #7d2d2d;
+            color: #e9a3a3;
+            padding: 12px 15px;
+            margin: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #e9a3a3;
+            font-size: 13px;
+        }
+
+        .schema-panel {
+            background: #252525;
+            border-top: 1px solid #3e3e3e;
+            padding: 10px 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .schema-panel textarea {
+            width: 100%;
+            background: #1e1e1e;
+            border: 1px solid #3e3e3e;
+            border-radius: 4px;
+            color: #d4d4d4;
+            padding: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            background: #2d2d2d;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #3e3e3e;
+        }
+
+        .zoom-btn {
+            background: #3e3e3e;
+            color: #d4d4d4;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #4e4e4e;
+        }
+
+        .zoom-level {
+            color: #d4d4d4;
+            font-size: 12px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .node {
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>JSON Editor</h1>
+        <div class="header-controls">
+            <div id="validation-status" class="status valid">Valid JSON</div>
+            <label for="file-import" class="btn btn-secondary">Import</label>
+            <input type="file" id="file-import" accept=".json">
+            <button id="export-btn" class="btn btn-secondary">Export</button>
+            <button id="format-btn" class="btn">Format</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="editor-panel">
+            <div class="panel-header">
+                <span>JSON Editor</span>
+                <div class="panel-header-controls">
+                    <button id="toggle-schema-btn" class="small-btn">Schema Validation</button>
+                </div>
+            </div>
+            <div id="editor-container"></div>
+            <div id="schema-panel" class="schema-panel hidden">
+                <div style="font-size: 12px; margin-bottom: 8px; color: #888;">JSON Schema (optional):</div>
+                <textarea id="schema-input" placeholder="Paste your JSON Schema here..."></textarea>
+                <div id="schema-validation-result" style="margin-top: 8px; font-size: 12px;"></div>
+            </div>
+        </div>
+
+        <div class="visualization-panel">
+            <div class="panel-header">
+                <span>Graph Visualization</span>
+                <div class="panel-header-controls">
+                    <button id="refresh-viz-btn" class="small-btn">Refresh</button>
+                    <button id="reset-layout-btn" class="small-btn">Reset Layout</button>
+                </div>
+            </div>
+            <div id="visualization-container">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoom-in">+</button>
+                    <div class="zoom-level" id="zoom-level">100%</div>
+                    <button class="zoom-btn" id="zoom-out">−</button>
+                    <button class="zoom-btn" id="zoom-reset">⊙</button>
+                </div>
+                <svg id="edges-svg"></svg>
+                <div id="graph-canvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script>
+        // JSON Schema Validator (Inline minimal implementation)
+        class JSONSchemaValidator {
+            validate(data, schema) {
+                try {
+                    return this.validateRecursive(data, schema, 'root');
+                } catch (error) {
+                    return { valid: false, errors: [error.message] };
+                }
+            }
+
+            validateRecursive(data, schema, path) {
+                const errors = [];
+
+                // Type validation
+                if (schema.type) {
+                    const actualType = Array.isArray(data) ? 'array' : typeof data;
+                    const expectedType = schema.type;
+
+                    if (actualType === 'object' && expectedType !== 'object' && expectedType !== 'array') {
+                        errors.push(`${path}: Expected type ${expectedType}, got ${actualType}`);
+                    } else if (actualType !== expectedType && !(actualType === 'array' && expectedType === 'array')) {
+                        if (!(expectedType === 'integer' && actualType === 'number' && Number.isInteger(data))) {
+                            errors.push(`${path}: Expected type ${expectedType}, got ${actualType}`);
+                        }
+                    }
+                }
+
+                // Required properties
+                if (schema.required && typeof data === 'object' && !Array.isArray(data)) {
+                    schema.required.forEach(prop => {
+                        if (!(prop in data)) {
+                            errors.push(`${path}: Missing required property '${prop}'`);
+                        }
+                    });
+                }
+
+                // Properties validation
+                if (schema.properties && typeof data === 'object' && !Array.isArray(data)) {
+                    for (const [key, propSchema] of Object.entries(schema.properties)) {
+                        if (key in data) {
+                            const result = this.validateRecursive(data[key], propSchema, `${path}.${key}`);
+                            errors.push(...result.errors);
+                        }
+                    }
+                }
+
+                // Array items validation
+                if (schema.items && Array.isArray(data)) {
+                    data.forEach((item, index) => {
+                        const result = this.validateRecursive(item, schema.items, `${path}[${index}]`);
+                        errors.push(...result.errors);
+                    });
+                }
+
+                return { valid: errors.length === 0, errors };
+            }
+        }
+
+        const schemaValidator = new JSONSchemaValidator();
+
+        // Graph Visualization Engine
+        class GraphVisualizer {
+            constructor(container, svgContainer) {
+                this.container = container;
+                this.svgContainer = svgContainer;
+                this.nodes = [];
+                this.edges = [];
+                this.zoom = 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.isDragging = false;
+                this.dragNode = null;
+            }
+
+            clear() {
+                this.container.innerHTML = '';
+                this.svgContainer.innerHTML = '';
+                this.nodes = [];
+                this.edges = [];
+            }
+
+            parseJSON(data, key = 'root', parent = null, depth = 0) {
+                const nodeId = this.nodes.length;
+                const type = Array.isArray(data) ? 'array' : typeof data;
+
+                let value = '';
+                let hasChildren = false;
+
+                if (type === 'object' || type === 'array') {
+                    hasChildren = true;
+                    value = type === 'array' ? `Array[${data.length}]` : 'Object';
+                } else {
+                    value = String(data);
+                    if (value.length > 50) value = value.substring(0, 50) + '...';
+                }
+
+                const node = {
+                    id: nodeId,
+                    key,
+                    value,
+                    type,
+                    depth,
+                    x: 0,
+                    y: 0,
+                    parent
+                };
+
+                this.nodes.push(node);
+
+                if (parent !== null) {
+                    this.edges.push({ from: parent, to: nodeId });
+                }
+
+                if (hasChildren) {
+                    if (type === 'array') {
+                        data.forEach((item, index) => {
+                            this.parseJSON(item, `[${index}]`, nodeId, depth + 1);
+                        });
+                    } else {
+                        Object.entries(data).forEach(([k, v]) => {
+                            this.parseJSON(v, k, nodeId, depth + 1);
+                        });
+                    }
+                }
+
+                return nodeId;
+            }
+
+            calculateLayout() {
+                if (this.nodes.length === 0) return;
+
+                const levelWidth = 250;
+                const nodeHeight = 80;
+                const nodesPerLevel = {};
+
+                // Group nodes by depth
+                this.nodes.forEach(node => {
+                    if (!nodesPerLevel[node.depth]) {
+                        nodesPerLevel[node.depth] = [];
+                    }
+                    nodesPerLevel[node.depth].push(node);
+                });
+
+                // Position nodes
+                Object.entries(nodesPerLevel).forEach(([depth, levelNodes]) => {
+                    const d = parseInt(depth);
+                    levelNodes.forEach((node, index) => {
+                        node.x = d * levelWidth + 50;
+                        node.y = index * nodeHeight + 50;
+                    });
+                });
+            }
+
+            render() {
+                this.clear();
+                this.calculateLayout();
+                this.drawEdges();
+                this.drawNodes();
+            }
+
+            drawEdges() {
+                const svgNS = 'http://www.w3.org/2000/svg';
+
+                this.edges.forEach(edge => {
+                    const fromNode = this.nodes[edge.from];
+                    const toNode = this.nodes[edge.to];
+
+                    const path = document.createElementNS(svgNS, 'path');
+                    const x1 = fromNode.x + 100;
+                    const y1 = fromNode.y + 30;
+                    const x2 = toNode.x;
+                    const y2 = toNode.y + 30;
+
+                    const midX = (x1 + x2) / 2;
+                    const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', 'edge-line');
+                    this.svgContainer.appendChild(path);
+                });
+            }
+
+            drawNodes() {
+                this.nodes.forEach(node => {
+                    const nodeEl = document.createElement('div');
+                    nodeEl.className = 'node';
+                    nodeEl.style.left = node.x + 'px';
+                    nodeEl.style.top = node.y + 'px';
+                    nodeEl.dataset.nodeId = node.id;
+
+                    const keyEl = document.createElement('div');
+                    keyEl.className = 'node-key';
+                    keyEl.textContent = node.key;
+
+                    const valueEl = document.createElement('div');
+                    valueEl.className = 'node-value';
+                    valueEl.textContent = node.value;
+
+                    const typeEl = document.createElement('div');
+                    typeEl.className = 'node-type';
+                    typeEl.textContent = node.type;
+
+                    nodeEl.appendChild(keyEl);
+                    nodeEl.appendChild(valueEl);
+                    nodeEl.appendChild(typeEl);
+
+                    // Drag functionality
+                    nodeEl.addEventListener('mousedown', (e) => this.startDrag(e, node));
+
+                    this.container.appendChild(nodeEl);
+                });
+            }
+
+            startDrag(e, node) {
+                this.isDragging = true;
+                this.dragNode = node;
+                this.dragStartX = e.clientX;
+                this.dragStartY = e.clientY;
+                this.dragNodeStartX = node.x;
+                this.dragNodeStartY = node.y;
+
+                const onMouseMove = (e) => {
+                    if (!this.isDragging) return;
+
+                    const dx = e.clientX - this.dragStartX;
+                    const dy = e.clientY - this.dragStartY;
+
+                    this.dragNode.x = this.dragNodeStartX + dx;
+                    this.dragNode.y = this.dragNodeStartY + dy;
+
+                    this.updateNodePosition(this.dragNode);
+                    this.drawEdges();
+                };
+
+                const onMouseUp = () => {
+                    this.isDragging = false;
+                    this.dragNode = null;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            }
+
+            updateNodePosition(node) {
+                const nodeEl = this.container.querySelector(`[data-node-id="${node.id}"]`);
+                if (nodeEl) {
+                    nodeEl.style.left = node.x + 'px';
+                    nodeEl.style.top = node.y + 'px';
+                }
+            }
+
+            setZoom(level) {
+                this.zoom = level;
+                this.container.style.transform = `scale(${level})`;
+                this.container.style.transformOrigin = 'top left';
+            }
+
+            visualize(jsonData) {
+                this.nodes = [];
+                this.edges = [];
+                this.parseJSON(jsonData);
+                this.render();
+            }
+        }
+
+        // Application State
+        let editor;
+        let visualizer;
+        let currentJSON = {};
+        let validationTimer;
+
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: JSON.stringify({
+                    "name": "JSON Editor",
+                    "version": "1.0.0",
+                    "features": [
+                        "Syntax Highlighting",
+                        "Validation",
+                        "Visualization",
+                        "Import/Export",
+                        "Schema Validation"
+                    ],
+                    "settings": {
+                        "theme": "dark",
+                        "autoSave": true
+                    },
+                    "metadata": {
+                        "author": "JSON Editor",
+                        "created": new Date().toISOString()
+                    }
+                }, null, 2),
+                language: 'json',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                fontSize: 13,
+                folding: true,
+                foldingStrategy: 'indentation'
+            });
+
+            // Validate on change
+            editor.onDidChangeModelContent(() => {
+                clearTimeout(validationTimer);
+                validationTimer = setTimeout(validateAndVisualize, 500);
+            });
+
+            // Initial visualization
+            validateAndVisualize();
+        });
+
+        // Initialize visualizer
+        const graphCanvas = document.getElementById('graph-canvas');
+        const edgesSvg = document.getElementById('edges-svg');
+        visualizer = new GraphVisualizer(graphCanvas, edgesSvg);
+
+        // Validation and Visualization
+        function validateAndVisualize() {
+            const jsonText = editor.getValue();
+            const statusEl = document.getElementById('validation-status');
+
+            try {
+                currentJSON = JSON.parse(jsonText);
+                statusEl.className = 'status valid';
+                statusEl.textContent = 'Valid JSON';
+
+                // Update visualization
+                visualizer.visualize(currentJSON);
+
+                // Schema validation if enabled
+                validateSchema();
+            } catch (error) {
+                statusEl.className = 'status invalid';
+                statusEl.textContent = 'Invalid JSON: ' + error.message;
+
+                // Clear visualization
+                visualizer.clear();
+            }
+        }
+
+        function validateSchema() {
+            const schemaPanel = document.getElementById('schema-panel');
+            const schemaInput = document.getElementById('schema-input');
+            const resultEl = document.getElementById('schema-validation-result');
+
+            if (schemaPanel.classList.contains('hidden') || !schemaInput.value.trim()) {
+                resultEl.innerHTML = '';
+                return;
+            }
+
+            try {
+                const schema = JSON.parse(schemaInput.value);
+                const result = schemaValidator.validate(currentJSON, schema);
+
+                if (result.valid) {
+                    resultEl.innerHTML = '<span style="color: #a3e9a3;">✓ Valid according to schema</span>';
+                } else {
+                    resultEl.innerHTML = '<span style="color: #e9a3a3;">✗ Schema validation errors:</span><br>' +
+                        result.errors.map(err => `  • ${err}`).join('<br>');
+                }
+            } catch (error) {
+                resultEl.innerHTML = '<span style="color: #e9a3a3;">Invalid schema JSON</span>';
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('format-btn').addEventListener('click', () => {
+            try {
+                const formatted = JSON.stringify(JSON.parse(editor.getValue()), null, 2);
+                editor.setValue(formatted);
+            } catch (error) {
+                alert('Cannot format invalid JSON');
+            }
+        });
+
+        document.getElementById('file-import').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const json = JSON.parse(event.target.result);
+                        editor.setValue(JSON.stringify(json, null, 2));
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('export-btn').addEventListener('click', () => {
+            try {
+                const json = JSON.parse(editor.getValue());
+                const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Cannot export invalid JSON');
+            }
+        });
+
+        document.getElementById('toggle-schema-btn').addEventListener('click', () => {
+            const schemaPanel = document.getElementById('schema-panel');
+            schemaPanel.classList.toggle('hidden');
+            validateSchema();
+        });
+
+        document.getElementById('refresh-viz-btn').addEventListener('click', () => {
+            validateAndVisualize();
+        });
+
+        document.getElementById('reset-layout-btn').addEventListener('click', () => {
+            validateAndVisualize();
+        });
+
+        // Zoom controls
+        let currentZoom = 1;
+
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            currentZoom = Math.min(currentZoom + 0.1, 2);
+            updateZoom();
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            currentZoom = Math.max(currentZoom - 0.1, 0.5);
+            updateZoom();
+        });
+
+        document.getElementById('zoom-reset').addEventListener('click', () => {
+            currentZoom = 1;
+            updateZoom();
+        });
+
+        function updateZoom() {
+            visualizer.setZoom(currentZoom);
+            document.getElementById('zoom-level').textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        // Schema input change
+        document.getElementById('schema-input').addEventListener('input', () => {
+            clearTimeout(validationTimer);
+            validationTimer = setTimeout(validateSchema, 500);
+        });
+    </script>
+</body>
+</html>
