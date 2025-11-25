@@ -325,10 +325,61 @@
             border-right: 1px solid #3e3e3e;
             user-select: none;
             min-width: 40px;
+            z-index: 1;
+        }
+
+        #syntax-highlight {
+            position: absolute;
+            left: 60px;
+            top: 0;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            pointer-events: none;
+            color: #d4d4d4;
+            z-index: 1;
+            overflow: hidden;
         }
 
         #json-editor {
             padding-left: 60px;
+            position: relative;
+            z-index: 2;
+            color: transparent;
+            caret-color: #d4d4d4;
+            background: transparent;
+        }
+
+        #json-editor::selection {
+            background: rgba(14, 99, 156, 0.5);
+        }
+
+        /* Syntax highlighting colours */
+        .json-key {
+            color: #9cdcfe;
+        }
+
+        .json-string {
+            color: #ce9178;
+        }
+
+        .json-number {
+            color: #b5cea8;
+        }
+
+        .json-boolean {
+            color: #569cd6;
+        }
+
+        .json-null {
+            color: #569cd6;
+        }
+
+        .json-punctuation {
+            color: #d4d4d4;
         }
 
         .error-line {
@@ -361,6 +412,7 @@
             <div id="editor-container">
                 <div class="editor-wrapper">
                     <div class="line-numbers" id="line-numbers">1</div>
+                    <div id="syntax-highlight"></div>
                     <textarea id="json-editor" spellcheck="false"></textarea>
                 </div>
             </div>
@@ -578,7 +630,6 @@
             }
 
             render() {
-                this.clear();
                 this.calculateLayout();
                 this.drawEdges();
                 this.drawNodes();
@@ -738,6 +789,7 @@
 
         jsonEditor.value = JSON.stringify(defaultJSON, null, 2);
         updateLineNumbers();
+        updateSyntaxHighlight();
 
         // Initialize visualizer
         const graphCanvas = document.getElementById('graph-canvas');
@@ -748,6 +800,45 @@
         function updateLineNumbers() {
             const lines = jsonEditor.value.split('\n').length;
             lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+        }
+
+        // Syntax highlighting function
+        function highlightJSON(text) {
+            // Escape HTML
+            text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // Tokenize and highlight JSON
+            // Match: "key": or "string" or number or boolean or null or punctuation
+            text = text.replace(/"(?:\\.|[^"\\])*"\s*:|"(?:\\.|[^"\\])*"|\b-?\d+\.?\d*\b|\btrue\b|\bfalse\b|\bnull\b|[{}[\]:,]/g, function(match) {
+                if (/"(?:\\.|[^"\\])*"\s*:/.test(match)) {
+                    // Key-value pair
+                    const key = match.substring(0, match.indexOf(':'));
+                    return '<span class="json-key">' + key + '</span><span class="json-punctuation">:</span>';
+                } else if (match.startsWith('"')) {
+                    // String value
+                    return '<span class="json-string">' + match + '</span>';
+                } else if (/^-?\d+\.?\d*$/.test(match)) {
+                    // Number
+                    return '<span class="json-number">' + match + '</span>';
+                } else if (match === 'true' || match === 'false') {
+                    // Boolean
+                    return '<span class="json-boolean">' + match + '</span>';
+                } else if (match === 'null') {
+                    // Null
+                    return '<span class="json-null">' + match + '</span>';
+                } else {
+                    // Punctuation
+                    return '<span class="json-punctuation">' + match + '</span>';
+                }
+            });
+
+            return text;
+        }
+
+        // Update syntax highlighting
+        function updateSyntaxHighlight() {
+            const syntaxHighlight = document.getElementById('syntax-highlight');
+            syntaxHighlight.innerHTML = highlightJSON(jsonEditor.value);
         }
 
         // Validation and Visualization
@@ -802,12 +893,15 @@
         // Editor event listeners
         jsonEditor.addEventListener('input', () => {
             updateLineNumbers();
+            updateSyntaxHighlight();
             clearTimeout(validationTimer);
             validationTimer = setTimeout(validateAndVisualize, 500);
         });
 
         jsonEditor.addEventListener('scroll', () => {
+            const syntaxHighlight = document.getElementById('syntax-highlight');
             lineNumbers.scrollTop = jsonEditor.scrollTop;
+            syntaxHighlight.scrollTop = jsonEditor.scrollTop;
         });
 
         // Tab key support
@@ -827,6 +921,7 @@
                 const formatted = JSON.stringify(JSON.parse(jsonEditor.value), null, 2);
                 jsonEditor.value = formatted;
                 updateLineNumbers();
+                updateSyntaxHighlight();
                 validateAndVisualize();
             } catch (error) {
                 alert('Cannot format invalid JSON: ' + error.message);
@@ -842,6 +937,7 @@
                         const json = JSON.parse(event.target.result);
                         jsonEditor.value = JSON.stringify(json, null, 2);
                         updateLineNumbers();
+                        updateSyntaxHighlight();
                         validateAndVisualize();
                     } catch (error) {
                         alert('Invalid JSON file: ' + error.message);
@@ -882,6 +978,7 @@
                 const json = JSON.parse(jsonEditor.value);
                 jsonEditor.value = JSON.stringify(json);
                 updateLineNumbers();
+                updateSyntaxHighlight();
             } catch (error) {
                 alert('Cannot collapse invalid JSON');
             }
@@ -892,6 +989,7 @@
                 const json = JSON.parse(jsonEditor.value);
                 jsonEditor.value = JSON.stringify(json, null, 2);
                 updateLineNumbers();
+                updateSyntaxHighlight();
             } catch (error) {
                 alert('Cannot expand invalid JSON');
             }
