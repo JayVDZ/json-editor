@@ -17,30 +17,21 @@ This is a fully offline JSON editor web application inspired by JSONCrack.com/ed
 
 ## File Structure
 
-- `index.html` - Main application using Monaco Editor (requires microsoft.com CDN access)
-- `index-offline.html` - **Fully offline version** with custom editor (recommended for airgapped environments)
+- `index.html` - **Fully offline version** with custom editor
 - `package.json` - Project metadata (for documentation only, no build process)
 - `README.md` - User-facing documentation
 
 ## Architecture
 
-### Two-File Approach
+The project contains:
 
-The project maintains two versions:
-
-1. **index.html**: Uses Monaco Editor from Microsoft CDN
-   - Better editor experience with advanced features
-   - Requires access to `cdnjs.cloudflare.com` for Monaco
-   - Use when CDN access is available
-
-2. **index-offline.html**: Completely self-contained
+1. **index-offline.html**: Completely self-contained
    - Custom textarea-based editor
    - Zero external dependencies
-   - **Use this version for airgapped/offline environments**
 
 ### Core Components
 
-Both files contain three main systems:
+The project contain three main systems:
 
 1. **JSON Editor Panel** (left side)
    - Syntax-aware text editor
@@ -102,10 +93,9 @@ The `GraphVisualizer` class implements a tree layout algorithm:
 
 When adding new features:
 
-1. **Maintain both files**: Changes must be replicated to both `index.html` and `index-offline.html`
-2. **No external dependencies**: All code must be inline or use Microsoft CDN
-3. **Test offline**: Always verify functionality works without internet
-4. **Preserve self-contained nature**: Do not split into separate CSS/JS files
+1. **No external dependencies**: All code must be inline or use Microsoft CDN
+2. **Test offline**: Always verify functionality works without internet
+3. **Preserve self-contained nature**: Do not split into separate CSS/JS files
 
 ### Modifying the Graph Visualization
 
@@ -134,7 +124,7 @@ All CSS is inline in `<style>` tags. Key classes:
 ## Common Tasks
 
 ### Testing Offline
-1. Open `index-offline.html` in Edge browser
+1. Open `index.html` in Edge browser
 2. Disconnect from internet
 3. Verify all features work (edit, validate, visualize, import, export)
 
