@@ -1,6 +1,6 @@
 # JSON Editor
 
-A fully offline JSON editor with visualization capabilities, inspired by JSONCrack.com/editor.
+A fully offline JSON editor with visualisation capabilities..
 
 ## Features
 
@@ -12,7 +12,7 @@ A fully offline JSON editor with visualization capabilities, inspired by JSONCra
 - ✅ Export JSON files
 - ✅ JSON Schema validation
 - ✅ Draggable graph nodes
-- ✅ Zoom controls for visualization
+- ✅ Zoom controls for visualisation
 - ✅ Dark theme optimized for readability
 
 ## Quick Start
