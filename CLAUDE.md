@@ -4,7 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a fully offline JSON editor web application inspired by JSONCrack.com/editor. The application provides JSON editing with syntax highlighting, real-time validation, graph visualization, and JSON Schema support. It is designed to run in isolated environments without internet access.
+This is a fully offline JSON editor web application inspired by JSONCrack.com/editor. The application provides JSON editing with syntax highlighting, real-time validation, graph visualisation, and JSON Schema support. It is designed to run in isolated environments without internet access.
+
+## Language and Spelling
+
+**Important:** All documentation, comments, and user-facing text must use British English (en-GB) spelling conventions.
+
+Examples:
+- Use "colour" not "color"
+- Use "visualisation" not "visualization"
+- Use "optimise" not "optimize"
+- Use "centre" not "center"
+- Use "behaviour" not "behavior"
 
 ## Critical Constraints
 
@@ -40,7 +51,7 @@ The project contain three main systems:
    - Collapse/expand functionality
    - Optional JSON Schema validation panel
 
-2. **Graph Visualization Panel** (right side)
+2. **Graph Visualisation Panel** (right side)
    - Custom graph rendering engine
    - SVG-based edge drawing
    - Draggable nodes
@@ -52,7 +63,7 @@ The project contain three main systems:
    - Optional JSON Schema validator (custom implementation)
    - Visual status indicators
 
-### Graph Visualization Algorithm
+### Graph Visualisation Algorithm
 
 The `GraphVisualizer` class implements a tree layout algorithm:
 
@@ -70,7 +81,7 @@ The `GraphVisualizer` class implements a tree layout algorithm:
 - Debounced validation (500ms) on editor changes
 - Catches syntax errors via try-catch on `JSON.parse()`
 - Updates status indicator in header
-- Clears visualization on invalid JSON
+- Clears visualisation on invalid JSON
 
 ### JSON Schema Validation
 - Custom minimal implementation in `JSONSchemaValidator` class
@@ -97,7 +108,7 @@ When adding new features:
 2. **Test offline**: Always verify functionality works without internet
 3. **Preserve self-contained nature**: Do not split into separate CSS/JS files
 
-### Modifying the Graph Visualization
+### Modifying the Graph Visualisation
 
 The layout algorithm is in `GraphVisualizer.calculateLayout()`:
 - Adjust `levelWidth` to change horizontal spacing between depth levels
@@ -116,7 +127,7 @@ The validator is intentionally minimal. To add features:
 ### Styling Changes
 
 All CSS is inline in `<style>` tags. Key classes:
-- `.node` - graph visualization nodes
+- `.node` - graph visualisation nodes
 - `.edge-line` - SVG paths connecting nodes
 - `#json-editor` - the textarea editor
 - `.status.valid` / `.status.invalid` - validation indicators
@@ -126,11 +137,11 @@ All CSS is inline in `<style>` tags. Key classes:
 ### Testing Offline
 1. Open `index.html` in Edge browser
 2. Disconnect from internet
-3. Verify all features work (edit, validate, visualize, import, export)
+3. Verify all features work (edit, validate, visualise, import, export)
 
-### Debugging Visualization Issues
+### Debugging Visualisation Issues
 - Check browser console for JavaScript errors
-- Verify JSON is valid before visualization renders
+- Verify JSON is valid before visualisation renders
 - Check node positions: `console.log(visualizer.nodes)`
 - Check SVG rendering: inspect `#edges-svg` element
 

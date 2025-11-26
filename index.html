@@ -91,6 +91,18 @@
             display: flex;
             flex-direction: column;
             border-right: 1px solid #3e3e3e;
+            transition: width 0.3s ease;
+        }
+
+        .editor-panel.hidden {
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+            border-right: none;
+        }
+
+        .editor-panel.full-width {
+            width: 100%;
         }
 
         .panel-header {
@@ -125,6 +137,26 @@
             border-color: #4e4e4e;
         }
 
+        .toggle-panel-btn {
+            background: transparent;
+            color: #d4d4d4;
+            border: none;
+            padding: 0;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.2s;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-panel-btn:hover {
+            color: #4fc3f7;
+        }
+
         #editor-container {
             flex: 1;
             overflow: hidden;
@@ -151,6 +183,17 @@
             display: flex;
             flex-direction: column;
             background: #1e1e1e;
+            transition: width 0.3s ease;
+        }
+
+        .visualization-panel.hidden {
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .visualization-panel.full-width {
+            width: 100%;
         }
 
         #visualization-container {
@@ -435,7 +478,10 @@
     <div class="main-container">
         <div class="editor-panel">
             <div class="panel-header">
-                <span>JSON Editor</span>
+                <div style="display: flex; align-items: center;">
+                    <span>JSON Editor</span>
+                    <button id="toggle-editor-btn" class="toggle-panel-btn" title="Hide/Show Editor Panel">◀</button>
+                </div>
                 <div class="panel-header-controls">
                     <button id="toggle-schema-btn" class="small-btn">Schema Validation</button>
                     <button id="collapse-all-btn" class="small-btn">Collapse All</button>
@@ -458,7 +504,10 @@
 
         <div class="visualization-panel">
             <div class="panel-header">
-                <span>Graph Visualization</span>
+                <div style="display: flex; align-items: center;">
+                    <span>Graph Visualization</span>
+                    <button id="toggle-viz-btn" class="toggle-panel-btn" title="Hide/Show Visualization Panel">▶</button>
+                </div>
                 <div class="panel-header-controls">
                     <button id="auto-layout-btn" class="small-btn">Auto Layout</button>
                     <button id="refresh-viz-btn" class="small-btn">Refresh</button>
@@ -1092,6 +1141,62 @@
             visualizer.setZoom(currentZoom);
             document.getElementById('zoom-level').textContent = Math.round(currentZoom * 100) + '%';
         }
+
+        // Panel toggle controls
+        const editorPanel = document.querySelector('.editor-panel');
+        const vizPanel = document.querySelector('.visualization-panel');
+        const toggleEditorBtn = document.getElementById('toggle-editor-btn');
+        const toggleVizBtn = document.getElementById('toggle-viz-btn');
+
+        document.getElementById('toggle-editor-btn').addEventListener('click', () => {
+            if (editorPanel.classList.contains('hidden')) {
+                // Show editor, restore visualization to normal
+                editorPanel.classList.remove('hidden');
+                vizPanel.classList.remove('full-width');
+                toggleEditorBtn.textContent = '◀';
+            } else if (vizPanel.classList.contains('hidden')) {
+                // If viz is hidden, show viz instead of hiding editor
+                vizPanel.classList.remove('hidden');
+                editorPanel.classList.remove('full-width');
+                toggleVizBtn.textContent = '▶';
+                // Redraw visualization after panel resize
+                setTimeout(() => {
+                    validateAndVisualize();
+                }, 300);
+            } else {
+                // Hide editor, expand visualization
+                editorPanel.classList.add('hidden');
+                vizPanel.classList.add('full-width');
+                toggleEditorBtn.textContent = '▶';
+                // Redraw visualization after panel resize
+                setTimeout(() => {
+                    validateAndVisualize();
+                }, 300);
+            }
+        });
+
+        document.getElementById('toggle-viz-btn').addEventListener('click', () => {
+            if (vizPanel.classList.contains('hidden')) {
+                // Show visualization, restore editor to normal
+                vizPanel.classList.remove('hidden');
+                editorPanel.classList.remove('full-width');
+                toggleVizBtn.textContent = '▶';
+                // Redraw visualization after panel resize
+                setTimeout(() => {
+                    validateAndVisualize();
+                }, 300);
+            } else if (editorPanel.classList.contains('hidden')) {
+                // If editor is hidden, show editor instead of hiding viz
+                editorPanel.classList.remove('hidden');
+                vizPanel.classList.remove('full-width');
+                toggleEditorBtn.textContent = '◀';
+            } else {
+                // Hide visualization, expand editor
+                vizPanel.classList.add('hidden');
+                editorPanel.classList.add('full-width');
+                toggleVizBtn.textContent = '◀';
+            }
+        });
 
         // Schema input change
         document.getElementById('schema-input').addEventListener('input', () => {
