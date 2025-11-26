@@ -52,10 +52,8 @@ jobs:
             1. Download `json-editor-${{ github.ref_name }}.zip`
             2. Extract the archive
             3. Open `index.html` in your browser
-
-            ### What's Changed
-            See commit history for details.
           files: |
             json-editor-${{ github.ref_name }}.zip
           draft: false
           prerelease: false
+          generate_release_notes: true
