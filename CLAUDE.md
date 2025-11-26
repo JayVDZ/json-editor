@@ -25,7 +25,7 @@ This is a fully offline JSON editor web application inspired by JSONCrack.com/ed
 
 The project contains:
 
-1. **index-offline.html**: Completely self-contained
+1. **index.html**: Completely self-contained
    - Custom textarea-based editor
    - Zero external dependencies
 

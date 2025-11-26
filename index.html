@@ -338,12 +338,20 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
             line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            white-space: pre;
+            word-wrap: normal;
+            word-break: normal;
+            overflow-wrap: normal;
+            overflow-x: auto;
             pointer-events: none;
             color: #d4d4d4;
             z-index: 1;
-            overflow: hidden;
+            overflow-y: hidden;
+            font-variant-ligatures: none;
+            font-feature-settings: normal;
+            letter-spacing: 0;
+            tab-size: 2;
+            -moz-tab-size: 2;
         }
 
         #json-editor {
@@ -361,9 +369,15 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
             line-height: 1.6;
+            white-space: pre;
+            word-wrap: normal;
+            overflow-x: auto;
             resize: none;
             outline: none;
             tab-size: 2;
+            font-variant-ligatures: none;
+            font-feature-settings: normal;
+            letter-spacing: 0;
         }
 
         #json-editor::selection {
@@ -393,6 +407,14 @@
 
         .json-punctuation {
             color: #d4d4d4;
+        }
+
+        /* Ensure spans don't affect layout */
+        #syntax-highlight span {
+            font: inherit;
+            letter-spacing: inherit;
+            word-spacing: inherit;
+            line-height: inherit;
         }
 
         .error-line {
@@ -778,6 +800,7 @@
         let visualizer;
         let currentJSON = {};
         let validationTimer;
+        let highlightTimer;
 
         // Initialize editor
         const jsonEditor = document.getElementById('json-editor');
@@ -830,9 +853,11 @@
             // Match: "key": or "string" or number or boolean or null or punctuation
             text = text.replace(/"(?:\\.|[^"\\])*"\s*:|"(?:\\.|[^"\\])*"|\b-?\d+\.?\d*\b|\btrue\b|\bfalse\b|\bnull\b|[{}[\]:,]/g, function(match) {
                 if (/"(?:\\.|[^"\\])*"\s*:/.test(match)) {
-                    // Key-value pair
-                    const key = match.substring(0, match.indexOf(':'));
-                    return '<span class="json-key">' + key + '</span><span class="json-punctuation">:</span>';
+                    // Key-value pair - preserve whitespace after colon
+                    const colonIndex = match.indexOf(':');
+                    const key = match.substring(0, colonIndex);
+                    const whitespace = match.substring(colonIndex + 1);
+                    return '<span class="json-key">' + key + '</span><span class="json-punctuation">:</span>' + whitespace;
                 } else if (match.startsWith('"')) {
                     // String value
                     return '<span class="json-string">' + match + '</span>';
@@ -857,7 +882,15 @@
         // Update syntax highlighting
         function updateSyntaxHighlight() {
             const syntaxHighlight = document.getElementById('syntax-highlight');
+            // Preserve scroll position before updating innerHTML
+            const scrollTop = jsonEditor.scrollTop;
+            const scrollLeft = jsonEditor.scrollLeft;
+
             syntaxHighlight.innerHTML = highlightJSON(jsonEditor.value);
+
+            // Restore scroll position immediately
+            syntaxHighlight.scrollTop = scrollTop;
+            syntaxHighlight.scrollLeft = scrollLeft;
         }
 
         // Validation and Visualization
@@ -909,18 +942,29 @@
             }
         }
 
+        // Synchronize scroll positions across all editor layers
+        function syncScroll() {
+            const syntaxHighlight = document.getElementById('syntax-highlight');
+            lineNumbers.scrollTop = jsonEditor.scrollTop;
+            lineNumbers.scrollLeft = jsonEditor.scrollLeft;
+            syntaxHighlight.scrollTop = jsonEditor.scrollTop;
+            syntaxHighlight.scrollLeft = jsonEditor.scrollLeft;
+        }
+
         // Editor event listeners
         jsonEditor.addEventListener('input', () => {
             updateLineNumbers();
             updateSyntaxHighlight();
+            // Use requestAnimationFrame to ensure DOM has updated before syncing
+            requestAnimationFrame(() => {
+                syncScroll();
+            });
             clearTimeout(validationTimer);
             validationTimer = setTimeout(validateAndVisualize, 500);
         });
 
         jsonEditor.addEventListener('scroll', () => {
-            const syntaxHighlight = document.getElementById('syntax-highlight');
-            lineNumbers.scrollTop = jsonEditor.scrollTop;
-            syntaxHighlight.scrollTop = jsonEditor.scrollTop;
+            syncScroll();
         });
 
         // Tab key support
@@ -939,6 +983,7 @@
             try {
                 const formatted = JSON.stringify(JSON.parse(jsonEditor.value), null, 2);
                 jsonEditor.value = formatted;
+                // Maintain current scroll position
                 updateLineNumbers();
                 updateSyntaxHighlight();
                 validateAndVisualize();
@@ -955,6 +1000,9 @@
                     try {
                         const json = JSON.parse(event.target.result);
                         jsonEditor.value = JSON.stringify(json, null, 2);
+                        // Reset scroll position to top
+                        jsonEditor.scrollTop = 0;
+                        jsonEditor.scrollLeft = 0;
                         updateLineNumbers();
                         updateSyntaxHighlight();
                         validateAndVisualize();
@@ -996,6 +1044,7 @@
             try {
                 const json = JSON.parse(jsonEditor.value);
                 jsonEditor.value = JSON.stringify(json);
+                // Maintain current scroll position
                 updateLineNumbers();
                 updateSyntaxHighlight();
             } catch (error) {
@@ -1007,6 +1056,7 @@
             try {
                 const json = JSON.parse(jsonEditor.value);
                 jsonEditor.value = JSON.stringify(json, null, 2);
+                // Maintain current scroll position
                 updateLineNumbers();
                 updateSyntaxHighlight();
             } catch (error) {
