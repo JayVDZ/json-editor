@@ -365,13 +365,59 @@
             text-align: right;
             border-right: 1px solid #3e3e3e;
             user-select: none;
-            min-width: 40px;
+            min-width: 60px;
             z-index: 1;
+        }
+
+        .line-number-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+            height: 20.8px;
+        }
+
+        .fold-icon {
+            position: absolute;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #a0a0a0;
+            font-size: 14px;
+            border-radius: 3px;
+            margin-right: 2px;
+            font-weight: bold;
+        }
+
+        .fold-icon:hover {
+            background: #3e3e3e;
+            color: #ffffff;
+        }
+
+        .fold-icon.folded {
+            color: #4fc3f7;
+        }
+
+        .fold-icon.folded:hover {
+            color: #7dd3ff;
+        }
+
+        .line-number-text {
+            margin-left: auto;
+        }
+
+        .folded-placeholder {
+            color: #858585;
+            font-style: italic;
         }
 
         #syntax-highlight {
             position: absolute;
-            left: 60px;
+            left: 80px;
             top: 0;
             right: 0;
             bottom: 0;
@@ -397,7 +443,7 @@
 
         #json-editor {
             position: absolute;
-            left: 60px;
+            left: 80px;
             top: 0;
             right: 0;
             bottom: 0;
@@ -848,6 +894,7 @@
         let currentJSON = {};
         let validationTimer;
         let highlightTimer;
+        let foldedRegions = new Set(); // Track folded line numbers
 
         // Initialize editor
         const jsonEditor = document.getElementById('json-editor');
@@ -885,10 +932,107 @@
         const edgesSvg = document.getElementById('edges-svg');
         visualizer = new GraphVisualizer(graphCanvas, edgesSvg);
 
-        // Update line numbers
+        // Detect foldable regions in JSON
+        function detectFoldableRegions() {
+            const lines = jsonEditor.value.split('\n');
+            const regions = [];
+            const stack = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                // Check for opening braces/brackets
+                if (trimmed.endsWith('{') || trimmed.endsWith('[')) {
+                    stack.push({ start: i, type: trimmed.endsWith('{') ? 'object' : 'array' });
+                }
+
+                // Check for closing braces/brackets
+                if (trimmed.startsWith('}') || trimmed.startsWith(']')) {
+                    if (stack.length > 0) {
+                        const region = stack.pop();
+                        // Only create foldable region if it spans more than one line
+                        if (i > region.start) {
+                            regions.push({
+                                start: region.start,
+                                end: i,
+                                type: region.type
+                            });
+                        }
+                    }
+                }
+            }
+
+            return regions;
+        }
+
+        // Update line numbers with fold icons
         function updateLineNumbers() {
-            const lines = jsonEditor.value.split('\n').length;
-            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+            const lines = jsonEditor.value.split('\n');
+            const regions = detectFoldableRegions();
+            const regionsByLine = new Map();
+
+            // Map regions by their start line
+            regions.forEach(region => {
+                regionsByLine.set(region.start, region);
+            });
+
+            // Create visibility map for lines
+            const visibleLines = new Set();
+            for (let i = 0; i < lines.length; i++) {
+                visibleLines.add(i);
+            }
+
+            // Hide lines that are inside folded regions
+            foldedRegions.forEach(startLine => {
+                const region = regionsByLine.get(startLine);
+                if (region) {
+                    for (let i = startLine + 1; i <= region.end; i++) {
+                        visibleLines.delete(i);
+                    }
+                }
+            });
+
+            let html = '';
+            for (let i = 0; i < lines.length; i++) {
+                if (!visibleLines.has(i)) continue; // Skip hidden lines
+
+                const region = regionsByLine.get(i);
+                const isFolded = foldedRegions.has(i);
+
+                html += '<div class="line-number-row">';
+
+                if (region) {
+                    // This line has a foldable region
+                    const icon = isFolded ? '▸' : '▾';
+                    const foldedClass = isFolded ? ' folded' : '';
+                    html += `<span class="fold-icon${foldedClass}" data-line="${i}">${icon}</span>`;
+                }
+
+                html += `<span class="line-number-text">${i + 1}</span>`;
+                html += '</div>';
+            }
+
+            lineNumbers.innerHTML = html;
+
+            // Add click listeners to fold icons
+            document.querySelectorAll('.fold-icon').forEach(icon => {
+                icon.addEventListener('click', handleFoldClick);
+            });
+        }
+
+        // Handle fold icon clicks
+        function handleFoldClick(e) {
+            const lineNum = parseInt(e.target.dataset.line);
+
+            if (foldedRegions.has(lineNum)) {
+                foldedRegions.delete(lineNum);
+            } else {
+                foldedRegions.add(lineNum);
+            }
+
+            updateLineNumbers();
+            updateSyntaxHighlight();
         }
 
         // Syntax highlighting function
@@ -933,7 +1077,66 @@
             const scrollTop = jsonEditor.scrollTop;
             const scrollLeft = jsonEditor.scrollLeft;
 
-            syntaxHighlight.innerHTML = highlightJSON(jsonEditor.value);
+            const lines = jsonEditor.value.split('\n');
+            const regions = detectFoldableRegions();
+            const regionsByLine = new Map();
+
+            // Map regions by their start line
+            regions.forEach(region => {
+                regionsByLine.set(region.start, region);
+            });
+
+            // Create visibility map for lines
+            const visibleLines = new Set();
+            for (let i = 0; i < lines.length; i++) {
+                visibleLines.add(i);
+            }
+
+            // Hide lines that are folded
+            foldedRegions.forEach(startLine => {
+                const region = regionsByLine.get(startLine);
+                if (region) {
+                    for (let i = startLine + 1; i <= region.end; i++) {
+                        visibleLines.delete(i);
+                    }
+                }
+            });
+
+            // Build output with folding
+            let outputLines = [];
+            for (let i = 0; i < lines.length; i++) {
+                if (visibleLines.has(i)) {
+                    let line = lines[i];
+
+                    // If this line starts a folded region, add placeholder
+                    if (foldedRegions.has(i)) {
+                        const region = regionsByLine.get(i);
+                        const trimmed = line.trim();
+                        const indent = line.substring(0, line.indexOf(trimmed));
+                        const char = region.type === 'object' ? '{' : '[';
+                        const closeChar = region.type === 'object' ? '}' : ']';
+
+                        // Extract the key if present
+                        const keyMatch = trimmed.match(/^"[^"]*":\s*/);
+                        const key = keyMatch ? keyMatch[0] : '';
+
+                        // Use a special marker that won't be escaped
+                        line = indent + key + char + '___FOLDED___' + closeChar;
+
+                        // Add comma if the original closing line had one
+                        if (lines[region.end].trim().endsWith(',')) {
+                            line += ',';
+                        }
+                    }
+
+                    outputLines.push(line);
+                }
+            }
+
+            // Highlight first, then replace the placeholder
+            let highlighted = highlightJSON(outputLines.join('\n'));
+            highlighted = highlighted.replace(/___FOLDED___/g, '<span class="folded-placeholder">...</span>');
+            syntaxHighlight.innerHTML = highlighted;
 
             // Restore scroll position immediately
             syntaxHighlight.scrollTop = scrollTop;
