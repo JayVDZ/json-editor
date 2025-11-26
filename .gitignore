@@ -30,3 +30,6 @@ build/
 # Temporary files
 *.tmp
 .cache/
+
+# Agent files
+.claude/
