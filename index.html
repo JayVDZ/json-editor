@@ -201,6 +201,12 @@
             overflow: auto;
             position: relative;
             padding: 20px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        #visualization-container.dragging {
+            cursor: grabbing;
         }
 
         #graph-canvas {
@@ -931,6 +937,45 @@
         const graphCanvas = document.getElementById('graph-canvas');
         const edgesSvg = document.getElementById('edges-svg');
         visualizer = new GraphVisualizer(graphCanvas, edgesSvg);
+
+        // Drag-to-pan functionality for visualization container
+        const vizContainer = document.getElementById('visualization-container');
+        let isDraggingCanvas = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let scrollStartX = 0;
+        let scrollStartY = 0;
+
+        vizContainer.addEventListener('mousedown', (e) => {
+            // Don't interfere with node dragging or zoom controls
+            if (e.target.closest('.node') || e.target.closest('.zoom-controls')) {
+                return;
+            }
+
+            isDraggingCanvas = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            scrollStartX = vizContainer.scrollLeft;
+            scrollStartY = vizContainer.scrollTop;
+            vizContainer.classList.add('dragging');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingCanvas) return;
+
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+
+            vizContainer.scrollLeft = scrollStartX - dx;
+            vizContainer.scrollTop = scrollStartY - dy;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDraggingCanvas) {
+                isDraggingCanvas = false;
+                vizContainer.classList.remove('dragging');
+            }
+        });
 
         // Detect foldable regions in JSON
         function detectFoldableRegions() {
