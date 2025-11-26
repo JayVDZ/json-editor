@@ -201,13 +201,24 @@
             overflow: auto;
             position: relative;
             padding: 20px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        #visualization-container.dragging {
+            cursor: grabbing;
+        }
+
+        #graph-wrapper {
+            position: relative;
+            min-width: 100%;
+            min-height: 600px;
         }
 
         #graph-canvas {
-            width: 100%;
-            height: 100%;
-            min-height: 600px;
             position: relative;
+            min-width: 100%;
+            min-height: 100%;
         }
 
         .node {
@@ -295,9 +306,9 @@
         }
 
         .zoom-controls {
-            position: absolute;
+            position: sticky;
             top: 10px;
-            right: 10px;
+            left: calc(100% - 150px);
             display: flex;
             gap: 5px;
             background: #2d2d2d;
@@ -305,6 +316,7 @@
             border-radius: 4px;
             border: 1px solid #3e3e3e;
             z-index: 10;
+            width: fit-content;
         }
 
         .zoom-btn {
@@ -334,10 +346,12 @@
             align-items: center;
         }
 
-        svg {
+        #edges-svg {
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 0;
             pointer-events: none;
         }
@@ -566,8 +580,10 @@
                     <button class="zoom-btn" id="zoom-out">−</button>
                     <button class="zoom-btn" id="zoom-reset">⊙</button>
                 </div>
-                <svg id="edges-svg"></svg>
-                <div id="graph-canvas"></div>
+                <div id="graph-wrapper">
+                    <svg id="edges-svg"></svg>
+                    <div id="graph-canvas"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -779,6 +795,11 @@
                 this.svgContainer.setAttribute('width', maxX);
                 this.svgContainer.setAttribute('height', maxY);
 
+                // Also set the wrapper size to ensure it expands
+                const wrapper = this.container.parentElement;
+                wrapper.style.width = maxX + 'px';
+                wrapper.style.height = maxY + 'px';
+
                 this.edges.forEach(edge => {
                     const fromNode = this.nodes[edge.from];
                     const toNode = this.nodes[edge.to];
@@ -931,6 +952,45 @@
         const graphCanvas = document.getElementById('graph-canvas');
         const edgesSvg = document.getElementById('edges-svg');
         visualizer = new GraphVisualizer(graphCanvas, edgesSvg);
+
+        // Drag-to-pan functionality for visualization container
+        const vizContainer = document.getElementById('visualization-container');
+        let isDraggingCanvas = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let scrollStartX = 0;
+        let scrollStartY = 0;
+
+        vizContainer.addEventListener('mousedown', (e) => {
+            // Don't interfere with node dragging or zoom controls
+            if (e.target.closest('.node') || e.target.closest('.zoom-controls')) {
+                return;
+            }
+
+            isDraggingCanvas = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            scrollStartX = vizContainer.scrollLeft;
+            scrollStartY = vizContainer.scrollTop;
+            vizContainer.classList.add('dragging');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingCanvas) return;
+
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+
+            vizContainer.scrollLeft = scrollStartX - dx;
+            vizContainer.scrollTop = scrollStartY - dy;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDraggingCanvas) {
+                isDraggingCanvas = false;
+                vizContainer.classList.remove('dragging');
+            }
+        });
 
         // Detect foldable regions in JSON
         function detectFoldableRegions() {
