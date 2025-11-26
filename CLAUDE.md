@@ -28,9 +28,10 @@ Examples:
 
 ## File Structure
 
-- `index.html` - **Fully offline version** with custom editor
+- `index.html` - Main application file with custom editor
 - `package.json` - Project metadata (for documentation only, no build process)
 - `README.md` - User-facing documentation
+- `LICENSE` - MIT License
 
 ## Architecture
 
@@ -94,7 +95,7 @@ The `GraphVisualizer` class implements a tree layout algorithm:
 - Export: Creates Blob and triggers download via temporary anchor element
 - Both operations validate JSON before proceeding
 
-### Collapse/Expand (offline version)
+### Collapse/Expand
 - "Collapse All": `JSON.stringify(json)` - single line
 - "Expand All": `JSON.stringify(json, null, 2)` - formatted with 2-space indent
 

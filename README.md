@@ -47,7 +47,7 @@ Simply open **`index.html`** in Microsoft Edge or any modern browser. No interne
 
 ## Architecture
 
-Both versions are completely self-contained single HTML files with all CSS and JavaScript embedded inline. The offline version (`index-offline.html`) has zero external dependencies and works in completely airgapped environments.
+The application is a completely self-contained single HTML file (`index.html`) with all CSS and JavaScript embedded inline. It has zero external dependencies and works in completely airgapped environments.
 
 ## Browser Compatibility
 
