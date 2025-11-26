@@ -977,8 +977,26 @@
                 regionsByLine.set(region.start, region);
             });
 
+            // Create visibility map for lines
+            const visibleLines = new Set();
+            for (let i = 0; i < lines.length; i++) {
+                visibleLines.add(i);
+            }
+
+            // Hide lines that are inside folded regions
+            foldedRegions.forEach(startLine => {
+                const region = regionsByLine.get(startLine);
+                if (region) {
+                    for (let i = startLine + 1; i <= region.end; i++) {
+                        visibleLines.delete(i);
+                    }
+                }
+            });
+
             let html = '';
             for (let i = 0; i < lines.length; i++) {
+                if (!visibleLines.has(i)) continue; // Skip hidden lines
+
                 const region = regionsByLine.get(i);
                 const isFolded = foldedRegions.has(i);
 
