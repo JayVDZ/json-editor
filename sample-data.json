@@ -1,0 +1,194 @@
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson",
+    "email": "alice.johnson@company.co.uk",
+    "department": "Engineering",
+    "position": "Senior Developer",
+    "salary": 75000,
+    "age": 28,
+    "active": true,
+    "startDate": "2019-03-15",
+    "skills": ["JavaScript", "Python", "React", "Node.js"],
+    "location": {
+      "city": "London",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "bob.smith@company.co.uk",
+    "department": "Marketing",
+    "position": "Marketing Manager",
+    "salary": 65000,
+    "age": 34,
+    "active": true,
+    "startDate": "2017-06-20",
+    "skills": ["SEO", "Content Writing", "Social Media"],
+    "location": {
+      "city": "Manchester",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Charlie Davis",
+    "email": "charlie.davis@company.co.uk",
+    "department": "Sales",
+    "position": "Sales Director",
+    "salary": 85000,
+    "age": 42,
+    "active": false,
+    "startDate": "2015-01-10",
+    "skills": ["Negotiation", "CRM", "Team Leadership"],
+    "location": {
+      "city": "Birmingham",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Diana Prince",
+    "email": "diana.prince@company.co.uk",
+    "department": "Engineering",
+    "position": "Lead Developer",
+    "salary": 90000,
+    "age": 31,
+    "active": true,
+    "startDate": "2018-09-01",
+    "skills": ["Java", "Spring Boot", "Kubernetes", "Docker"],
+    "location": {
+      "city": "Edinburgh",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Ethan Hunt",
+    "email": "ethan.hunt@company.co.uk",
+    "department": "Operations",
+    "position": "Operations Manager",
+    "salary": 70000,
+    "age": 29,
+    "active": true,
+    "startDate": "2020-02-14",
+    "skills": ["Project Management", "Agile", "Risk Assessment"],
+    "location": {
+      "city": "Bristol",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Fiona Green",
+    "email": "fiona.green@company.co.uk",
+    "department": "HR",
+    "position": "HR Director",
+    "salary": 78000,
+    "age": 38,
+    "active": true,
+    "startDate": "2016-11-05",
+    "skills": ["Recruitment", "Employee Relations", "Training"],
+    "location": {
+      "city": "Leeds",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 7,
+    "name": "George Wilson",
+    "email": "george.wilson@company.co.uk",
+    "department": "Engineering",
+    "position": "DevOps Engineer",
+    "salary": 72000,
+    "age": 26,
+    "active": true,
+    "startDate": "2021-04-12",
+    "skills": ["AWS", "Terraform", "CI/CD", "Monitoring"],
+    "location": {
+      "city": "London",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Hannah Brown",
+    "email": "hannah.brown@company.co.uk",
+    "department": "Design",
+    "position": "UI/UX Designer",
+    "salary": 68000,
+    "age": 27,
+    "active": true,
+    "startDate": "2020-08-03",
+    "skills": ["Figma", "Adobe XD", "User Research", "Prototyping"],
+    "location": {
+      "city": "Brighton",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Ian Clarke",
+    "email": "ian.clarke@company.co.uk",
+    "department": "Sales",
+    "position": "Account Executive",
+    "salary": 58000,
+    "age": 24,
+    "active": true,
+    "startDate": "2022-01-17",
+    "skills": ["Sales", "Customer Service", "Presentations"],
+    "location": {
+      "city": "Liverpool",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Julia Martinez",
+    "email": "julia.martinez@company.co.uk",
+    "department": "Finance",
+    "position": "Financial Controller",
+    "salary": 82000,
+    "age": 35,
+    "active": true,
+    "startDate": "2017-10-22",
+    "skills": ["Accounting", "Financial Analysis", "Budgeting", "Excel"],
+    "location": {
+      "city": "London",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Kevin Lee",
+    "email": "kevin.lee@company.co.uk",
+    "department": "Engineering",
+    "position": "Junior Developer",
+    "salary": 45000,
+    "age": 22,
+    "active": true,
+    "startDate": "2023-06-01",
+    "skills": ["HTML", "CSS", "JavaScript", "Git"],
+    "location": {
+      "city": "Cardiff",
+      "country": "UK"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Laura White",
+    "email": "laura.white@company.co.uk",
+    "department": "Marketing",
+    "position": "Content Strategist",
+    "salary": 62000,
+    "age": 30,
+    "active": false,
+    "startDate": "2019-07-08",
+    "skills": ["Content Strategy", "Copywriting", "Analytics"],
+    "location": {
+      "city": "Oxford",
+      "country": "UK"
+    }
+  }
+]

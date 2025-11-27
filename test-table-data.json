@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "age": 28,
+    "active": true,
+    "department": "Engineering",
+    "salary": 75000,
+    "skills": ["JavaScript", "Python", "React"]
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "age": 34,
+    "active": true,
+    "department": "Marketing",
+    "salary": 65000,
+    "skills": ["SEO", "Content Writing"]
+  },
+  {
+    "id": 3,
+    "name": "Charlie Davis",
+    "email": "charlie@example.com",
+    "age": 42,
+    "active": false,
+    "department": "Sales",
+    "salary": 80000,
+    "metadata": {
+      "country": "UK",
+      "office": "London"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Diana Prince",
+    "email": "diana@example.com",
+    "age": 31,
+    "active": true,
+    "department": "Engineering",
+    "salary": 85000,
+    "skills": ["Java", "Spring Boot", "Kubernetes"]
+  },
+  {
+    "id": 5,
+    "name": "Ethan Hunt",
+    "email": "ethan@example.com",
+    "age": 29,
+    "active": true,
+    "department": "Operations",
+    "salary": 70000
+  }
+]

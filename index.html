@@ -594,6 +594,7 @@
                         <option value="graph">Graph View</option>
                         <option value="force">Force-Directed</option>
                         <option value="treemap">Treemap</option>
+                        <option value="table">Table View</option>
                     </select>
                     <button id="auto-layout-btn" class="small-btn">Auto Layout</button>
                     <button id="refresh-viz-btn" class="small-btn">Refresh</button>
@@ -1452,6 +1453,300 @@
             }
         }
 
+        // Table View Visualizer - for array-based JSON data
+        class TableViewVisualizer {
+            constructor(container, svgContainer) {
+                this.container = container;
+                this.svgContainer = svgContainer;
+                this.currentData = null;
+                this.sortColumn = null;
+                this.sortDirection = 'asc';
+                this.searchTerm = '';
+            }
+
+            clear() {
+                this.container.innerHTML = '';
+                this.svgContainer.innerHTML = '';
+                this.currentData = null;
+                this.sortColumn = null;
+                this.sortDirection = 'asc';
+                this.searchTerm = '';
+            }
+
+            // Check if JSON is suitable for table view (array of objects)
+            isTableViewable(data) {
+                if (Array.isArray(data) && data.length > 0) {
+                    // Check if all items are objects (not primitives)
+                    return data.every(item => typeof item === 'object' && item !== null && !Array.isArray(item));
+                }
+                return false;
+            }
+
+            // Extract all unique keys from array of objects
+            extractColumns(data) {
+                const columnsSet = new Set();
+                data.forEach(row => {
+                    Object.keys(row).forEach(key => columnsSet.add(key));
+                });
+                return Array.from(columnsSet);
+            }
+
+            // Format cell value for display
+            formatCellValue(value) {
+                if (value === null) return 'null';
+                if (value === undefined) return '';
+                if (typeof value === 'object') {
+                    if (Array.isArray(value)) {
+                        return `[${value.length} items]`;
+                    }
+                    return `{${Object.keys(value).length} keys}`;
+                }
+                if (typeof value === 'string') {
+                    return value.length > 100 ? value.substring(0, 100) + '...' : value;
+                }
+                return String(value);
+            }
+
+            // Get full value for tooltip
+            getFullValue(value) {
+                if (value === null) return 'null';
+                if (value === undefined) return 'undefined';
+                if (typeof value === 'object') {
+                    return JSON.stringify(value, null, 2);
+                }
+                return String(value);
+            }
+
+            // Sort data by column
+            sortData(data, column, direction) {
+                return [...data].sort((a, b) => {
+                    const aVal = a[column];
+                    const bVal = b[column];
+
+                    // Handle null/undefined
+                    if (aVal === null || aVal === undefined) return direction === 'asc' ? 1 : -1;
+                    if (bVal === null || bVal === undefined) return direction === 'asc' ? -1 : 1;
+
+                    // Handle objects/arrays
+                    if (typeof aVal === 'object') return 0;
+                    if (typeof bVal === 'object') return 0;
+
+                    // Compare primitives
+                    if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            // Filter data by search term
+            filterData(data, searchTerm) {
+                if (!searchTerm) return data;
+                const term = searchTerm.toLowerCase();
+                return data.filter(row => {
+                    return Object.values(row).some(value => {
+                        if (value === null || value === undefined) return false;
+                        if (typeof value === 'object') {
+                            return JSON.stringify(value).toLowerCase().includes(term);
+                        }
+                        return String(value).toLowerCase().includes(term);
+                    });
+                });
+            }
+
+            visualize(jsonData) {
+                this.clear();
+                this.currentData = jsonData;
+
+                // Check if data is suitable for table view
+                if (!this.isTableViewable(jsonData)) {
+                    this.showMessage('Table view requires an array of objects. Current data structure is not compatible.');
+                    return;
+                }
+
+                this.renderTable(jsonData);
+            }
+
+            showMessage(message) {
+                this.container.innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: #888; font-size: 14px;">
+                        ${message}
+                    </div>
+                `;
+            }
+
+            renderTable(data) {
+                const columns = this.extractColumns(data);
+
+                if (columns.length === 0) {
+                    this.showMessage('No columns found in data.');
+                    return;
+                }
+
+                // Apply sorting and filtering
+                let processedData = this.filterData(data, this.searchTerm);
+                if (this.sortColumn && columns.includes(this.sortColumn)) {
+                    processedData = this.sortData(processedData, this.sortColumn, this.sortDirection);
+                }
+
+                // Create container
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'width: 100%; height: 100%; overflow: auto; position: relative;';
+
+                // Create controls bar
+                const controlsBar = document.createElement('div');
+                controlsBar.style.cssText = 'padding: 10px; background: #1e1e1e; border-bottom: 1px solid #333; display: flex; gap: 10px; align-items: center; position: sticky; top: 0; z-index: 10;';
+
+                // Search input
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.placeholder = 'Search rows...';
+                searchInput.value = this.searchTerm;
+                searchInput.style.cssText = 'padding: 6px 10px; background: #2d2d2d; border: 1px solid #444; color: #fff; border-radius: 4px; flex: 1; max-width: 300px; font-size: 13px;';
+                searchInput.addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value;
+                    this.renderTable(this.currentData);
+                });
+
+                // Row count
+                const rowCount = document.createElement('span');
+                rowCount.style.cssText = 'color: #888; font-size: 13px;';
+                rowCount.textContent = `${processedData.length} of ${data.length} rows`;
+
+                // Copy button
+                const copyBtn = document.createElement('button');
+                copyBtn.textContent = 'Copy as CSV';
+                copyBtn.style.cssText = 'padding: 6px 12px; background: #0e639c; border: none; color: #fff; border-radius: 4px; cursor: pointer; font-size: 13px;';
+                copyBtn.addEventListener('click', () => this.copyAsCSV(processedData, columns));
+                copyBtn.addEventListener('mouseenter', () => copyBtn.style.background = '#1177bb');
+                copyBtn.addEventListener('mouseleave', () => copyBtn.style.background = '#0e639c');
+
+                controlsBar.appendChild(searchInput);
+                controlsBar.appendChild(rowCount);
+                controlsBar.appendChild(copyBtn);
+                wrapper.appendChild(controlsBar);
+
+                // Create table
+                const tableContainer = document.createElement('div');
+                tableContainer.style.cssText = 'overflow: auto; max-height: calc(100vh - 200px);';
+
+                const table = document.createElement('table');
+                table.style.cssText = 'width: 100%; border-collapse: collapse; font-family: Consolas, Monaco, monospace; font-size: 13px;';
+
+                // Create header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headerRow.style.cssText = 'background: #1e1e1e; position: sticky; top: 0;';
+
+                columns.forEach(column => {
+                    const th = document.createElement('th');
+                    th.textContent = column;
+                    th.style.cssText = 'padding: 10px; text-align: left; border: 1px solid #333; background: #2d2d2d; color: #fff; cursor: pointer; user-select: none; white-space: nowrap;';
+
+                    // Add sort indicator
+                    if (this.sortColumn === column) {
+                        th.textContent += this.sortDirection === 'asc' ? ' ▲' : ' ▼';
+                    }
+
+                    // Click to sort
+                    th.addEventListener('click', () => {
+                        if (this.sortColumn === column) {
+                            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            this.sortColumn = column;
+                            this.sortDirection = 'asc';
+                        }
+                        this.renderTable(this.currentData);
+                    });
+
+                    // Hover effect
+                    th.addEventListener('mouseenter', () => th.style.background = '#3d3d3d');
+                    th.addEventListener('mouseleave', () => th.style.background = '#2d2d2d');
+
+                    headerRow.appendChild(th);
+                });
+
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Create body
+                const tbody = document.createElement('tbody');
+                processedData.forEach((row, rowIndex) => {
+                    const tr = document.createElement('tr');
+                    tr.style.cssText = 'border-bottom: 1px solid #333;';
+                    tr.addEventListener('mouseenter', () => tr.style.background = '#2a2a2a');
+                    tr.addEventListener('mouseleave', () => tr.style.background = 'transparent');
+
+                    columns.forEach(column => {
+                        const td = document.createElement('td');
+                        const value = row[column];
+                        td.textContent = this.formatCellValue(value);
+                        td.style.cssText = 'padding: 8px 10px; border: 1px solid #333; color: #ccc; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+
+                        // Add tooltip for full value
+                        td.title = this.getFullValue(value);
+
+                        // Color code by type
+                        if (value === null || value === undefined) {
+                            td.style.color = '#888';
+                            td.style.fontStyle = 'italic';
+                        } else if (typeof value === 'number') {
+                            td.style.color = '#b5cea8';
+                        } else if (typeof value === 'boolean') {
+                            td.style.color = '#569cd6';
+                        } else if (typeof value === 'object') {
+                            td.style.color = '#ce9178';
+                            td.style.cursor = 'pointer';
+                            // Click to expand nested object
+                            td.addEventListener('click', () => {
+                                alert(JSON.stringify(value, null, 2));
+                            });
+                        }
+
+                        tr.appendChild(td);
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                wrapper.appendChild(tableContainer);
+
+                this.container.appendChild(wrapper);
+            }
+
+            // Copy table data as CSV
+            copyAsCSV(data, columns) {
+                // Create CSV header
+                let csv = columns.map(col => `"${col}"`).join(',') + '\n';
+
+                // Create CSV rows
+                data.forEach(row => {
+                    const values = columns.map(col => {
+                        const value = row[col];
+                        if (value === null || value === undefined) return '';
+                        if (typeof value === 'object') {
+                            return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+                        }
+                        return `"${String(value).replace(/"/g, '""')}"`;
+                    });
+                    csv += values.join(',') + '\n';
+                });
+
+                // Copy to clipboard
+                navigator.clipboard.writeText(csv).then(() => {
+                    alert('Table copied as CSV to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    alert('Failed to copy to clipboard');
+                });
+            }
+
+            destroy() {
+                this.clear();
+            }
+        }
+
         // Application State
         let visualizers = {};
         let currentVisualizerType = 'graph';
@@ -1497,6 +1792,7 @@
         visualizers['graph'] = new GraphVisualizer(graphCanvas, edgesSvg);
         visualizers['force'] = new D3ForceGraphVisualizer(graphCanvas, edgesSvg);
         visualizers['treemap'] = new D3TreemapVisualizer(graphCanvas, edgesSvg);
+        visualizers['table'] = new TableViewVisualizer(graphCanvas, edgesSvg);
 
         // Load saved visualizer preference from localStorage
         const savedVisualizer = localStorage.getItem('visualizer');
