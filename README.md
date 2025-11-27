@@ -1,19 +1,26 @@
 # JSON Editor
 
-A fully offline JSON editor with visualisation capabilities..
+A fully offline JSON editor with multiple visualisation types and real-time validation.
 
 ## Features
 
-- ✅ Edit JSON with syntax highlighting
-- ✅ Collapsible JSON nodes in the editor
-- ✅ Real-time JSON validation
-- ✅ Visual graph/tree representation of JSON data
-- ✅ Import JSON files
-- ✅ Export JSON files
-- ✅ JSON Schema validation
-- ✅ Draggable graph nodes
-- ✅ Zoom controls for visualisation
-- ✅ Dark theme optimized for readability
+### Editor
+- ✅ Syntax highlighting for JSON
+- ✅ Collapsible JSON nodes (fold/unfold objects and arrays)
+- ✅ Real-time JSON validation with error messages
+- ✅ Line numbers
+- ✅ Import/Export JSON files
+- ✅ Format/prettify JSON
+- ✅ JSON Schema validation support
+- ✅ Dark theme optimised for readability
+
+### Visualisations
+- ✅ **Graph View** - Original hierarchical tree layout with draggable nodes
+- ✅ **Force-Directed Graph** - Physics-based D3.js visualisation with dynamic layout
+- ✅ **Treemap** - Hierarchical space-filling visualisation showing data proportions
+- ✅ **Table View** - Interactive table for array-based JSON with sorting, filtering, and CSV export
+- ✅ Zoom controls (+, -, reset) for all graph visualisations
+- ✅ Drag-to-pan canvas for easy navigation
 
 ## Quick Start
 
@@ -23,19 +30,37 @@ Simply open **`index.html`** in Microsoft Edge or any modern browser. No interne
 
 ## Usage Instructions
 
-1. **Editing JSON**: Type or paste JSON in the left panel
-2. **Format JSON**: Click "Format" button to auto-indent
-3. **Import File**: Click "Import" and select a `.json` file
-4. **Export File**: Click "Export" to download current JSON
-5. **Schema Validation**: Click "Schema Validation" button, paste a JSON Schema, and see validation results
-6. **Visualization**: The right panel shows a graph view of your JSON structure
-   - Drag nodes to rearrange them
-   - Use zoom controls (+, -, ⊙) to adjust view
-   - Click "Refresh" to reset layout
+### Editing JSON
+1. **Type or Paste**: Enter JSON in the left editor panel
+2. **Format**: Click "Expand All" to prettify with indentation
+3. **Collapse**: Click "Collapse All" to minify JSON
+4. **Fold Sections**: Click ▾/▸ icons next to objects/arrays to fold/unfold them
+5. **Import File**: Click "Import" and select a `.json` file
+6. **Export File**: Click "Export" to download current JSON
+
+### Visualisation
+1. **Select Type**: Use the dropdown in the visualisation panel to choose:
+   - **Graph View** - Traditional hierarchical tree
+   - **Force-Directed** - Physics simulation (great for complex structures)
+   - **Treemap** - Space-filling blocks (shows data proportions)
+   - **Table View** - Spreadsheet format (requires array of objects)
+
+2. **Interact**:
+   - **Graph/Force-Directed/Treemap**: Drag to pan, use zoom controls (+, -, ⊙)
+   - **Table View**: Click column headers to sort, use search box to filter, click "Copy as CSV" to export
+
+3. **Refresh**: Click "Refresh" button to reset visualisation
+
+### Schema Validation
+1. Click "Schema Validation" button
+2. Paste a JSON Schema in the panel
+3. Validation results appear below the schema
 
 ## Example Files
 
-- `test-data.json` - Sample complex JSON for testing
+- `sample-data.json` - 12 employee records (perfect for testing Table View)
+- `test-table-data.json` - 5 employee records (quick Table View testing)
+- `test-data.json` - Sample complex JSON for testing visualisations
 - `example-schema.json` - Sample JSON Schema for validation testing
 
 ## Requirements
@@ -47,7 +72,7 @@ Simply open **`index.html`** in Microsoft Edge or any modern browser. No interne
 
 ## Architecture
 
-The application is a completely self-contained single HTML file (`index.html`) with all CSS and JavaScript embedded inline. It has zero external dependencies and works in completely airgapped environments.
+The application is a completely self-contained single HTML file (`index.html`) with all CSS and JavaScript embedded inline. The only external dependency is D3.js (loaded from CDN for Force-Directed Graph and Treemap visualisations), which can be embedded for fully offline use. Works in completely airgapped environments.
 
 ## Browser Compatibility
 
