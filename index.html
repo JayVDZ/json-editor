@@ -1189,6 +1189,7 @@
                 this.breadcrumbs = [];
                 this.zoomBehavior = null;
                 this.currentTransform = null;
+                this.currentG = null;
             }
 
             clear() {
@@ -1199,6 +1200,7 @@
                 this.svgContainer.innerHTML = '';
                 this.currentRoot = null;
                 this.breadcrumbs = [];
+                this.currentG = null;
             }
 
             // Calculate size of a node based on its content
@@ -1310,12 +1312,16 @@
 
                 const g = this.svg.append('g');
 
+                // Store reference for text updates
+                this.currentG = g;
+
                 // Add zoom behavior
                 const zoomBehavior = d3.zoom()
                     .scaleExtent([0.1, 4])
                     .on('zoom', (event) => {
                         g.attr('transform', event.transform);
                         this.currentTransform = event.transform;
+                        this.updateTextVisibility(event.transform.k);
                     });
 
                 this.svg.call(zoomBehavior);
@@ -1356,41 +1362,66 @@
                     });
 
                 // Add labels for larger cells
-                cell.append('text')
+                const nameLabels = cell.append('text')
+                    .attr('class', 'treemap-name-label')
                     .attr('x', 4)
                     .attr('y', 14)
                     .attr('font-size', 11)
                     .attr('fill', '#fff')
                     .attr('font-weight', 600)
-                    .text(d => {
-                        const width = d.x1 - d.x0;
-                        const height = d.y1 - d.y0;
-                        if (width > 50 && height > 20) {
-                            return d.data.name.length > 15 ? d.data.name.substring(0, 15) + '...' : d.data.name;
-                        }
-                        return '';
-                    })
                     .style('pointer-events', 'none');
 
                 // Add value labels for larger cells
-                cell.append('text')
+                const valueLabels = cell.append('text')
+                    .attr('class', 'treemap-value-label')
                     .attr('x', 4)
                     .attr('y', 28)
                     .attr('font-size', 9)
                     .attr('fill', '#ccc')
                     .attr('font-family', 'Consolas, Monaco, monospace')
-                    .text(d => {
-                        const width = d.x1 - d.x0;
-                        const height = d.y1 - d.y0;
-                        if (width > 60 && height > 35) {
-                            return this.formatValue(d);
-                        }
-                        return '';
-                    })
                     .style('pointer-events', 'none');
+
+                // Initial text update
+                this.updateTextVisibility(1);
 
                 // Add breadcrumbs if we're zoomed in
                 this.renderBreadcrumbs();
+            }
+
+            updateTextVisibility(scale) {
+                if (!this.currentG) return;
+
+                // Update name labels - only show for reasonably sized cells
+                this.currentG.selectAll('.treemap-name-label')
+                    .text(function(d) {
+                        const width = (d.x1 - d.x0) * scale;
+                        const height = (d.y1 - d.y0) * scale;
+
+                        // Only show text for leaf nodes (no children) with enough space
+                        if (!d.children && width > 60 && height > 20) {
+                            const maxChars = Math.floor((width - 8) / 7);  // Account for padding
+                            if (maxChars < 3) return '';
+                            return d.data.name.length > maxChars ? d.data.name.substring(0, maxChars) + '...' : d.data.name;
+                        }
+                        return '';
+                    });
+
+                // Update value labels - even stricter requirements
+                const self = this;
+                this.currentG.selectAll('.treemap-value-label')
+                    .text(function(d) {
+                        const width = (d.x1 - d.x0) * scale;
+                        const height = (d.y1 - d.y0) * scale;
+
+                        // Only show value if there's plenty of space (need room for 2 lines)
+                        if (!d.children && width > 70 && height > 40) {
+                            const value = self.formatValue(d);
+                            const maxChars = Math.floor((width - 8) / 6);
+                            if (maxChars < 3) return '';
+                            return value.length > maxChars ? value.substring(0, maxChars) + '...' : value;
+                        }
+                        return '';
+                    });
             }
 
             zoomToNode(event, d) {
@@ -1407,7 +1438,12 @@
                 this.zoom = level;
                 if (this.svg && this.zoomBehavior) {
                     const transform = d3.zoomIdentity.scale(level);
-                    this.svg.transition().duration(300).call(this.zoomBehavior.transform, transform);
+                    this.svg.transition().duration(300)
+                        .call(this.zoomBehavior.transform, transform)
+                        .on('end', () => {
+                            // Ensure text updates after transition
+                            this.updateTextVisibility(level);
+                        });
                 }
             }
 
