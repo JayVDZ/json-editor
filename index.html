@@ -1868,7 +1868,7 @@
             renderSunburst(rootData) {
                 const width = Math.max(800, this.container.parentElement.clientWidth);
                 const height = Math.max(600, this.container.parentElement.clientHeight);
-                const radius = Math.min(width, height) / 2;
+                const radius = Math.min(width, height) / 2 - 20; // Subtract padding to prevent cropping
 
                 // Create SVG
                 this.svg = d3.select(this.container)
