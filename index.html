@@ -178,6 +178,27 @@
             color: #4fc3f7;
         }
 
+        .resize-handle {
+            width: 4px;
+            background: #2d2d2d;
+            cursor: col-resize;
+            position: relative;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .resize-handle:hover {
+            background: #4fc3f7;
+        }
+
+        .resize-handle.dragging {
+            background: #4fc3f7;
+        }
+
+        .resize-handle.hidden {
+            display: none;
+        }
+
         #editor-container {
             flex: 1;
             overflow: hidden;
@@ -582,6 +603,8 @@
                 <div id="schema-validation-result" style="margin-top: 8px; font-size: 12px;"></div>
             </div>
         </div>
+
+        <div class="resize-handle" id="resize-handle"></div>
 
         <div class="visualization-panel">
             <div class="panel-header">
@@ -2537,11 +2560,17 @@
                 // Show editor, restore visualisation to normal
                 editorPanel.classList.remove('hidden');
                 vizPanel.classList.remove('full-width');
+                editorPanel.style.width = '50%';
+                vizPanel.style.width = '50%';
+                resizeHandle.classList.remove('hidden');
                 toggleEditorBtn.textContent = '◀';
             } else if (vizPanel.classList.contains('hidden')) {
                 // If viz is hidden, show viz instead of hiding editor
                 vizPanel.classList.remove('hidden');
                 editorPanel.classList.remove('full-width');
+                editorPanel.style.width = '50%';
+                vizPanel.style.width = '50%';
+                resizeHandle.classList.remove('hidden');
                 toggleVizBtn.textContent = '▶';
                 // Redraw visualisation after panel resize
                 setTimeout(() => {
@@ -2551,6 +2580,9 @@
                 // Hide editor, expand visualisation
                 editorPanel.classList.add('hidden');
                 vizPanel.classList.add('full-width');
+                editorPanel.style.width = '';
+                vizPanel.style.width = '';
+                resizeHandle.classList.add('hidden');
                 toggleEditorBtn.textContent = '▶';
                 // Redraw visualisation after panel resize
                 setTimeout(() => {
@@ -2564,6 +2596,9 @@
                 // Show visualisation, restore editor to normal
                 vizPanel.classList.remove('hidden');
                 editorPanel.classList.remove('full-width');
+                editorPanel.style.width = '50%';
+                vizPanel.style.width = '50%';
+                resizeHandle.classList.remove('hidden');
                 toggleVizBtn.textContent = '▶';
                 // Redraw visualisation after panel resize
                 setTimeout(() => {
@@ -2573,11 +2608,17 @@
                 // If editor is hidden, show editor instead of hiding viz
                 editorPanel.classList.remove('hidden');
                 vizPanel.classList.remove('full-width');
+                editorPanel.style.width = '50%';
+                vizPanel.style.width = '50%';
+                resizeHandle.classList.remove('hidden');
                 toggleEditorBtn.textContent = '◀';
             } else {
                 // Hide visualisation, expand editor
                 vizPanel.classList.add('hidden');
                 editorPanel.classList.add('full-width');
+                editorPanel.style.width = '';
+                vizPanel.style.width = '';
+                resizeHandle.classList.add('hidden');
                 toggleVizBtn.textContent = '◀';
             }
         });
@@ -2586,6 +2627,54 @@
         document.getElementById('schema-input').addEventListener('input', () => {
             clearTimeout(validationTimer);
             validationTimer = setTimeout(validateSchema, 500);
+        });
+
+        // Resizable panes
+        const resizeHandle = document.getElementById('resize-handle');
+        let isResizing = false;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizeHandle.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+
+            // Skip if either panel is hidden
+            if (editorPanel.classList.contains('hidden') || vizPanel.classList.contains('hidden')) {
+                return;
+            }
+
+            const containerRect = document.querySelector('.main-container').getBoundingClientRect();
+            const offsetX = e.clientX - containerRect.left;
+            const containerWidth = containerRect.width;
+
+            // Calculate percentages (min 20%, max 80%)
+            let editorPercent = (offsetX / containerWidth) * 100;
+            editorPercent = Math.max(20, Math.min(80, editorPercent));
+            const vizPercent = 100 - editorPercent;
+
+            // Update widths
+            editorPanel.style.width = `${editorPercent}%`;
+            vizPanel.style.width = `${vizPercent}%`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+
+                // Redraw visualisation after resize
+                setTimeout(() => {
+                    validateAndVisualize();
+                }, 50);
+            }
         });
 
         // Initial visualisation
