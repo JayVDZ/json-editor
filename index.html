@@ -2580,6 +2580,8 @@
                 // Hide editor, expand visualisation
                 editorPanel.classList.add('hidden');
                 vizPanel.classList.add('full-width');
+                editorPanel.style.width = '';
+                vizPanel.style.width = '';
                 resizeHandle.classList.add('hidden');
                 toggleEditorBtn.textContent = '▶';
                 // Redraw visualisation after panel resize
@@ -2614,6 +2616,8 @@
                 // Hide visualisation, expand editor
                 vizPanel.classList.add('hidden');
                 editorPanel.classList.add('full-width');
+                editorPanel.style.width = '';
+                vizPanel.style.width = '';
                 resizeHandle.classList.add('hidden');
                 toggleVizBtn.textContent = '◀';
             }
