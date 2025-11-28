@@ -708,7 +708,7 @@
 
         const schemaValidator = new JSONSchemaValidator();
 
-        // Graph Visualization Engine
+        // Graph Visualisation Engine
         class GraphVisualizer {
             constructor(container, svgContainer) {
                 this.container = container;
@@ -944,7 +944,7 @@
             }
 
             destroy() {
-                // Clean up - reset zoom and clear visualization
+                // Clean up - reset zoom and clear visualisation
                 this.zoom = 1;
                 this.container.style.transform = '';
                 this.svgContainer.style.transform = '';
@@ -952,7 +952,7 @@
             }
         }
 
-        // D3 Force-Directed Graph Visualizer
+        // D3 Force-Directed Graph Visualiser
         class D3ForceGraphVisualizer {
             constructor(container, svgContainer) {
                 this.container = container;
@@ -1179,7 +1179,7 @@
             }
         }
 
-        // D3 Treemap Visualizer
+        // D3 Treemap Visualiser
         class D3TreemapVisualizer {
             constructor(container, svgContainer) {
                 this.container = container;
@@ -1260,7 +1260,7 @@
                 return traverse(data, key);
             }
 
-            // Get color based on type and depth
+            // Get colour based on type and depth
             getColor(type, depth) {
                 const colors = {
                     object: ['#0d47a1', '#1565c0', '#1976d2', '#1e88e5'],     // Deep blue
@@ -1453,7 +1453,7 @@
             }
         }
 
-        // Table View Visualizer - for array-based JSON data
+        // Table View Visualiser - for array-based JSON data
         class TableViewVisualizer {
             constructor(container, svgContainer) {
                 this.container = container;
@@ -1685,7 +1685,7 @@
                         // Add tooltip for full value
                         td.title = this.getFullValue(value);
 
-                        // Color code by type
+                        // Colour code by type
                         if (value === null || value === undefined) {
                             td.style.color = '#888';
                             td.style.fontStyle = 'italic';
@@ -1786,7 +1786,7 @@
         updateLineNumbers();
         updateSyntaxHighlight();
 
-        // Initialize visualizers
+        // Initialise visualisers
         const graphCanvas = document.getElementById('graph-canvas');
         const edgesSvg = document.getElementById('edges-svg');
         visualizers['graph'] = new GraphVisualizer(graphCanvas, edgesSvg);
@@ -1794,7 +1794,7 @@
         visualizers['treemap'] = new D3TreemapVisualizer(graphCanvas, edgesSvg);
         visualizers['table'] = new TableViewVisualizer(graphCanvas, edgesSvg);
 
-        // Load saved visualizer preference from localStorage
+        // Load saved visualiser preference from localStorage
         const savedVisualizer = localStorage.getItem('visualizer');
         if (savedVisualizer && visualizers[savedVisualizer]) {
             currentVisualizerType = savedVisualizer;
@@ -2051,7 +2051,7 @@
             syntaxHighlight.scrollLeft = scrollLeft;
         }
 
-        // Validation and Visualization
+        // Validation and Visualisation
         function validateAndVisualize() {
             const jsonText = jsonEditor.value;
             const statusEl = document.getElementById('validation-status');
@@ -2061,7 +2061,7 @@
                 statusEl.className = 'status valid';
                 statusEl.textContent = 'Valid JSON';
 
-                // Update visualization with current visualizer
+                // Update visualisation with current visualiser
                 const currentVisualizer = visualizers[currentVisualizerType];
                 if (currentVisualizer) {
                     currentVisualizer.visualize(currentJSON);
@@ -2073,7 +2073,7 @@
                 statusEl.className = 'status invalid';
                 statusEl.textContent = 'Invalid JSON: ' + error.message;
 
-                // Clear visualization
+                // Clear visualisation
                 const currentVisualizer = visualizers[currentVisualizerType];
                 if (currentVisualizer) {
                     currentVisualizer.clear();
@@ -2262,21 +2262,21 @@
             document.getElementById('zoom-level').textContent = Math.round(currentZoom * 100) + '%';
         }
 
-        // Visualizer switcher
+        // Visualiser switcher
         document.getElementById('visualizer-select').addEventListener('change', (e) => {
             const newType = e.target.value;
 
-            // Clear current visualizer
+            // Clear current visualiser
             const currentVisualizer = visualizers[currentVisualizerType];
             if (currentVisualizer) {
                 currentVisualizer.destroy();
             }
 
-            // Switch to new visualizer
+            // Switch to new visualiser
             currentVisualizerType = newType;
             localStorage.setItem('visualizer', newType);
 
-            // Re-visualize with new type
+            // Re-visualise with new type
             if (currentJSON && Object.keys(currentJSON).length > 0) {
                 validateAndVisualize();
             }
@@ -2290,7 +2290,7 @@
 
         document.getElementById('toggle-editor-btn').addEventListener('click', () => {
             if (editorPanel.classList.contains('hidden')) {
-                // Show editor, restore visualization to normal
+                // Show editor, restore visualisation to normal
                 editorPanel.classList.remove('hidden');
                 vizPanel.classList.remove('full-width');
                 toggleEditorBtn.textContent = '◀';
@@ -2299,16 +2299,16 @@
                 vizPanel.classList.remove('hidden');
                 editorPanel.classList.remove('full-width');
                 toggleVizBtn.textContent = '▶';
-                // Redraw visualization after panel resize
+                // Redraw visualisation after panel resize
                 setTimeout(() => {
                     validateAndVisualize();
                 }, 300);
             } else {
-                // Hide editor, expand visualization
+                // Hide editor, expand visualisation
                 editorPanel.classList.add('hidden');
                 vizPanel.classList.add('full-width');
                 toggleEditorBtn.textContent = '▶';
-                // Redraw visualization after panel resize
+                // Redraw visualisation after panel resize
                 setTimeout(() => {
                     validateAndVisualize();
                 }, 300);
@@ -2317,11 +2317,11 @@
 
         document.getElementById('toggle-viz-btn').addEventListener('click', () => {
             if (vizPanel.classList.contains('hidden')) {
-                // Show visualization, restore editor to normal
+                // Show visualisation, restore editor to normal
                 vizPanel.classList.remove('hidden');
                 editorPanel.classList.remove('full-width');
                 toggleVizBtn.textContent = '▶';
-                // Redraw visualization after panel resize
+                // Redraw visualisation after panel resize
                 setTimeout(() => {
                     validateAndVisualize();
                 }, 300);
@@ -2331,7 +2331,7 @@
                 vizPanel.classList.remove('full-width');
                 toggleEditorBtn.textContent = '◀';
             } else {
-                // Hide visualization, expand editor
+                // Hide visualisation, expand editor
                 vizPanel.classList.add('hidden');
                 editorPanel.classList.add('full-width');
                 toggleVizBtn.textContent = '◀';
@@ -2344,7 +2344,7 @@
             validationTimer = setTimeout(validateSchema, 500);
         });
 
-        // Initial visualization
+        // Initial visualisation
         validateAndVisualize();
     </script>
 </body>
