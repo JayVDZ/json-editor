@@ -1040,8 +1040,8 @@
                 if (nodes.length === 0) return;
 
                 // Set up SVG
-                const width = Math.max(800, this.container.parentElement.clientWidth);
-                const height = Math.max(600, this.container.parentElement.clientHeight);
+                const width = Math.max(800, this.container.parentElement.parentElement.clientWidth);
+                const height = Math.max(600, this.container.parentElement.parentElement.clientHeight);
 
                 // Use D3 to create SVG in the container
                 this.svg = d3.select(this.container)
@@ -1302,8 +1302,8 @@
             }
 
             renderTreemap(rootData) {
-                const width = Math.max(800, this.container.parentElement.clientWidth);
-                const height = Math.max(600, this.container.parentElement.clientHeight);
+                const width = Math.max(800, this.container.parentElement.parentElement.clientWidth);
+                const height = Math.max(600, this.container.parentElement.parentElement.clientHeight);
 
                 // Create SVG
                 this.svg = d3.select(this.container)
