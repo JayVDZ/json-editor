@@ -18,6 +18,7 @@ A fully offline JSON editor with multiple visualisation types and real-time vali
 - ✅ **Graph View** - Original hierarchical tree layout with draggable nodes
 - ✅ **Force-Directed Graph** - Physics-based D3.js visualisation with dynamic layout
 - ✅ **Treemap** - Hierarchical space-filling visualisation showing data proportions
+- ✅ **Sunburst** - Circular hierarchy diagram with depth-based colour gradients
 - ✅ **Table View** - Interactive table for array-based JSON with sorting, filtering, and CSV export
 - ✅ Zoom controls (+, -, reset) for all graph visualisations
 - ✅ Drag-to-pan canvas for easy navigation
@@ -43,10 +44,11 @@ Simply open **`index.html`** in Microsoft Edge or any modern browser. No interne
    - **Graph View** - Traditional hierarchical tree
    - **Force-Directed** - Physics simulation (great for complex structures)
    - **Treemap** - Space-filling blocks (shows data proportions)
+   - **Sunburst** - Circular diagram (perfect for deep nesting)
    - **Table View** - Spreadsheet format (requires array of objects)
 
 2. **Interact**:
-   - **Graph/Force-Directed/Treemap**: Drag to pan, use zoom controls (+, -, ⊙)
+   - **Graph/Force-Directed/Treemap/Sunburst**: Drag to pan, use zoom controls (+, -, ⊙)
    - **Table View**: Click column headers to sort, use search box to filter, click "Copy as CSV" to export
 
 3. **Refresh**: Click "Refresh" button to reset visualisation
@@ -72,7 +74,7 @@ Simply open **`index.html`** in Microsoft Edge or any modern browser. No interne
 
 ## Architecture
 
-The application is a completely self-contained single HTML file (`index.html`) with all CSS and JavaScript embedded inline. The only external dependency is D3.js (loaded from CDN for Force-Directed Graph and Treemap visualisations), which can be embedded for fully offline use. Works in completely airgapped environments.
+The application is a completely self-contained single HTML file (`index.html`) with all CSS and JavaScript embedded inline. The only external dependency is D3.js (loaded from CDN for Force-Directed Graph, Treemap, and Sunburst visualisations), which can be embedded for fully offline use. Works in completely airgapped environments.
 
 ## Browser Compatibility
 
