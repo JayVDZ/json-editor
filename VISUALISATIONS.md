@@ -127,16 +127,18 @@ if (Array.isArray(json) && json.length > 0 && typeof json[0] === 'object') {
 
 ---
 
-## Additional Visualization Options (Lower Priority)
+## Additional Visualisation Options (Lower Priority)
 
-### 5. Sunburst Diagram (D3.js)
+### ✅ 5. Sunburst Diagram (D3.js) - COMPLETED
 **Why**: Beautiful circular hierarchy. Very space-efficient for deep nesting.
 
 **Implementation**:
-- Concentric circles, each ring = depth level
-- Arc size = proportion of children
-- Click to zoom into segments
-- Color gradient by depth
+- ✅ Concentric circles, each ring = depth level
+- ✅ Arc size = proportion of children
+- ✅ Click to zoom into segments (logs to console)
+- ✅ Colour gradient by depth
+- ✅ Drag-to-pan and scroll-to-zoom
+- ✅ Tooltips showing path and values
 - **Complexity**: Medium-High
 - **Estimated effort**: 3-4 hours
 
