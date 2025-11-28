@@ -1869,9 +1869,10 @@
             renderSunburst(rootData) {
                 // Get the actual visualization container dimensions
                 const vizContainer = document.getElementById('visualization-container');
-                const width = vizContainer.clientWidth;
-                const height = vizContainer.clientHeight;
-                const radius = (Math.min(width, height) / 2) * 0.88; // Use 88% to ensure proper padding all around
+                // Account for 20px padding on all sides
+                const width = vizContainer.clientWidth - 40;
+                const height = vizContainer.clientHeight - 40;
+                const radius = (Math.min(width, height) / 2) * 0.95; // Use 95% of available space
 
                 // Create SVG
                 this.svg = d3.select(this.container)
