@@ -219,7 +219,7 @@
 
         #visualization-container {
             flex: 1;
-            overflow: auto;
+            overflow: hidden;
             position: relative;
             padding: 20px;
             cursor: grab;
@@ -1871,7 +1871,7 @@
                 const vizContainer = document.getElementById('visualization-container');
                 const width = vizContainer.clientWidth;
                 const height = vizContainer.clientHeight;
-                const radius = (Math.min(width, height) / 2) * 0.95; // Use 95% of available space
+                const radius = (Math.min(width, height) / 2) * 0.92; // Use 92% to ensure no clipping
 
                 // Create SVG
                 this.svg = d3.select(this.container)
