@@ -2,6 +2,8 @@
 
 A fully offline JSON editor with multiple visualisation types and real-time validation.
 
+![JSON Editor with Sunburst Visualisation](docs/screenshot-v1.5.0-sunburst.png)
+
 ## Features
 
 ### Editor
