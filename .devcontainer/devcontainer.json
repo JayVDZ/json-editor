@@ -2,7 +2,16 @@
   "name": "JSON Editor Development",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 
-  "postStartCommand": "python3 -m http.server 8000 &",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+
+  "postStartCommand": "bash /workspaces/json-editor/.devcontainer/start-server.sh",
 
   "forwardPorts": [8000],
 
