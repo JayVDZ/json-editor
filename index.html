@@ -482,11 +482,11 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
             line-height: 1.6;
-            white-space: pre;
-            word-wrap: normal;
-            word-break: normal;
-            overflow-wrap: normal;
-            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
             pointer-events: none;
             color: #d4d4d4;
             z-index: 1;
@@ -513,15 +513,25 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 13px;
             line-height: 1.6;
-            white-space: pre;
-            word-wrap: normal;
-            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: hidden;
             resize: none;
             outline: none;
             tab-size: 2;
             font-variant-ligatures: none;
             font-feature-settings: normal;
             letter-spacing: 0;
+        }
+
+        /* No wrap mode */
+        .no-wrap #syntax-highlight,
+        .no-wrap #json-editor {
+            white-space: pre;
+            word-wrap: normal;
+            word-break: normal;
+            overflow-wrap: normal;
+            overflow-x: auto;
         }
 
         #json-editor::selection {
@@ -589,6 +599,7 @@
                     <button id="toggle-schema-btn" class="small-btn">Schema Validation</button>
                     <button id="collapse-all-btn" class="small-btn">Collapse All</button>
                     <button id="expand-all-btn" class="small-btn">Expand All</button>
+                    <button id="toggle-wrap-btn" class="small-btn" title="Toggle word wrap">Wrap: On</button>
                 </div>
             </div>
             <div id="editor-container">
@@ -2852,6 +2863,32 @@
                 alert('Cannot expand invalid JSON');
             }
         });
+
+        // Word wrap toggle
+        let wordWrapEnabled = true;
+        const toggleWrapBtn = document.getElementById('toggle-wrap-btn');
+        const editorWrapper = document.querySelector('.editor-wrapper');
+
+        toggleWrapBtn.addEventListener('click', () => {
+            wordWrapEnabled = !wordWrapEnabled;
+            if (wordWrapEnabled) {
+                editorWrapper.classList.remove('no-wrap');
+                toggleWrapBtn.textContent = 'Wrap: On';
+            } else {
+                editorWrapper.classList.add('no-wrap');
+                toggleWrapBtn.textContent = 'Wrap: Off';
+            }
+            // Save preference
+            localStorage.setItem('wordWrap', wordWrapEnabled ? 'on' : 'off');
+        });
+
+        // Load saved word wrap preference
+        const savedWrap = localStorage.getItem('wordWrap');
+        if (savedWrap === 'off') {
+            wordWrapEnabled = false;
+            editorWrapper.classList.add('no-wrap');
+            toggleWrapBtn.textContent = 'Wrap: Off';
+        }
 
         document.getElementById('refresh-viz-btn').addEventListener('click', () => {
             validateAndVisualize();
