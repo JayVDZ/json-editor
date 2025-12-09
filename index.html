@@ -767,8 +767,8 @@
             }
 
             // Performance limits to prevent browser crashes
-            static MAX_NODES = 500;
-            static MAX_DEPTH = 20;
+            static MAX_NODES = 300;
+            static MAX_DEPTH = 15;
 
             parseJSON(data, key = 'root', parent = null, depth = 0) {
                 // Prevent stack overflow and excessive node creation
@@ -1061,8 +1061,8 @@
             }
 
             // Performance limits to prevent browser crashes
-            static MAX_NODES = 500;
-            static MAX_DEPTH = 20;
+            static MAX_NODES = 300;
+            static MAX_DEPTH = 15;
 
             parseJSON(data, key = 'root', parent = null, depth = 0) {
                 const nodes = [];
@@ -1311,8 +1311,8 @@
         // D3 Treemap Visualiser
         class D3TreemapVisualizer {
             // Performance limits to prevent browser crashes
-            static MAX_NODES = 500;
-            static MAX_DEPTH = 20;
+            static MAX_NODES = 300;
+            static MAX_DEPTH = 15;
 
             constructor(container, svgContainer) {
                 this.container = container;
@@ -1915,8 +1915,8 @@
         // D3 Sunburst Diagram Visualiser - circular hierarchy
         class D3SunburstVisualiser {
             // Performance limits to prevent browser crashes
-            static MAX_NODES = 500;
-            static MAX_DEPTH = 20;
+            static MAX_NODES = 300;
+            static MAX_DEPTH = 15;
 
             constructor(container, svgContainer) {
                 this.container = container;
@@ -2551,14 +2551,14 @@
                 }
 
                 // Update visualisation with current visualiser
-                // Skip visualisation entirely for very large files (>100KB) to prevent crashes
+                // Skip visualisation entirely for very large files (>50KB) to prevent crashes
                 const currentVisualizer = visualizers[currentVisualizerType];
                 if (currentVisualizer) {
-                    if (jsonText.length > 100000) {
+                    if (jsonText.length > 50000) {
                         currentVisualizer.clear();
                         // Show message in visualisation area
                         const graphCanvas = document.getElementById('graph-canvas');
-                        graphCanvas.innerHTML = '<div style="padding: 20px; color: #888; text-align: center;">Visualisation disabled for files larger than 100KB to prevent browser crashes.<br>The JSON is valid and can be edited.</div>';
+                        graphCanvas.innerHTML = '<div style="padding: 20px; color: #888; text-align: center;">Visualisation disabled for files larger than 50KB to prevent browser crashes.<br>The JSON is valid and can be edited.</div>';
                     } else {
                         // Wrap visualisation in try-catch to prevent crashes
                         try {
@@ -2793,15 +2793,44 @@
                 reader.onload = (event) => {
                     try {
                         const json = JSON.parse(event.target.result);
-                        jsonEditor.value = JSON.stringify(json, null, 2);
+                        const formatted = JSON.stringify(json, null, 2);
+
                         // Clear folded regions on import
                         foldedRegions.clear();
-                        // Reset scroll position to top
-                        jsonEditor.scrollTop = 0;
-                        jsonEditor.scrollLeft = 0;
-                        updateLineNumbers();
-                        updateSyntaxHighlight();
-                        validateAndVisualize();
+
+                        // For large files, defer heavy operations to prevent UI freeze
+                        if (formatted.length > 10000) {
+                            // Set the value first
+                            jsonEditor.value = formatted;
+                            jsonEditor.scrollTop = 0;
+                            jsonEditor.scrollLeft = 0;
+
+                            // Clear syntax highlight temporarily
+                            document.getElementById('syntax-highlight').innerHTML = formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                            // Defer line numbers update
+                            setTimeout(() => {
+                                updateLineNumbers();
+                            }, 50);
+
+                            // Defer syntax highlighting
+                            setTimeout(() => {
+                                updateSyntaxHighlight();
+                            }, 100);
+
+                            // Defer validation and visualisation
+                            setTimeout(() => {
+                                validateAndVisualize();
+                            }, 200);
+                        } else {
+                            // Small files can be processed immediately
+                            jsonEditor.value = formatted;
+                            jsonEditor.scrollTop = 0;
+                            jsonEditor.scrollLeft = 0;
+                            updateLineNumbers();
+                            updateSyntaxHighlight();
+                            validateAndVisualize();
+                        }
                     } catch (error) {
                         alert('Invalid JSON file: ' + error.message);
                     }
