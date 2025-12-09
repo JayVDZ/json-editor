@@ -12,6 +12,7 @@
   },
 
   "postStartCommand": "bash /workspaces/json-editor/.devcontainer/start-server.sh",
+  "postAttachCommand": "bash /workspaces/json-editor/.devcontainer/start-server.sh",
 
   "forwardPorts": [8000],
 

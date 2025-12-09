@@ -2019,7 +2019,7 @@
         let currentJSON = {};
         let validationTimer;
         let highlightTimer;
-        let foldedRegions = new Set(); // Track folded line numbers
+        let foldedRegions = new Map(); // Track folded regions: lineNum -> { originalContent, placeholder }
 
         // Initialize editor
         const jsonEditor = document.getElementById('json-editor');
@@ -2152,33 +2152,23 @@
                 regionsByLine.set(region.start, region);
             });
 
-            // Create visibility map for lines
-            const visibleLines = new Set();
-            for (let i = 0; i < lines.length; i++) {
-                visibleLines.add(i);
-            }
-
-            // Hide lines that are inside folded regions
-            foldedRegions.forEach(startLine => {
-                const region = regionsByLine.get(startLine);
-                if (region) {
-                    for (let i = startLine + 1; i <= region.end; i++) {
-                        visibleLines.delete(i);
-                    }
+            // Also detect folded lines (lines containing {...} or [...])
+            const foldedLines = new Set();
+            lines.forEach((line, i) => {
+                if (/\{\.\.\.\}|\[\.\.\.\]/.test(line)) {
+                    foldedLines.add(i);
                 }
             });
 
             let html = '';
             for (let i = 0; i < lines.length; i++) {
-                if (!visibleLines.has(i)) continue; // Skip hidden lines
-
                 const region = regionsByLine.get(i);
-                const isFolded = foldedRegions.has(i);
+                const isFolded = foldedLines.has(i);
 
                 html += '<div class="line-number-row">';
 
-                if (region) {
-                    // This line has a foldable region
+                if (region || isFolded) {
+                    // This line has a foldable region or is already folded
                     const icon = isFolded ? '▸' : '▾';
                     const foldedClass = isFolded ? ' folded' : '';
                     html += `<span class="fold-icon${foldedClass}" data-line="${i}">${icon}</span>`;
@@ -2199,12 +2189,64 @@
         // Handle fold icon clicks
         function handleFoldClick(e) {
             const lineNum = parseInt(e.target.dataset.line);
+            const lines = jsonEditor.value.split('\n');
+            const currentLine = lines[lineNum];
 
+            // Check if this line is currently folded (has stored content)
             if (foldedRegions.has(lineNum)) {
-                foldedRegions.delete(lineNum);
-            } else {
-                foldedRegions.add(lineNum);
+                // Unfold: restore the original content
+                const stored = foldedRegions.get(lineNum);
+                if (stored) {
+                    lines[lineNum] = stored.originalContent;
+                    foldedRegions.delete(lineNum);
+                    jsonEditor.value = lines.join('\n');
+                }
+
+                updateLineNumbers();
+                updateSyntaxHighlight();
+                clearTimeout(validationTimer);
+                validationTimer = setTimeout(validateAndVisualize, 500);
+                return;
             }
+
+            // Not folded - try to fold it
+            // Find the region that starts at this line
+            const regions = detectFoldableRegions();
+            const region = regions.find(r => r.start === lineNum);
+
+            if (!region) return;
+
+            // Fold: replace content with placeholder
+            const startLine = lines[lineNum];
+            const endLine = lines[region.end];
+            const trimmedStart = startLine.trim();
+            const indent = startLine.substring(0, startLine.length - startLine.trimStart().length);
+
+            // Extract the key if present (e.g., "settings": )
+            const keyMatch = trimmedStart.match(/^"[^"]*":\s*/);
+            const key = keyMatch ? keyMatch[0] : '';
+
+            // Determine bracket type
+            const openChar = region.type === 'object' ? '{' : '[';
+            const closeChar = region.type === 'object' ? '}' : ']';
+
+            // Check if closing line has a comma
+            const hasComma = endLine.trim().endsWith(',');
+
+            // Build the placeholder line
+            const placeholder = indent + key + openChar + '...' + closeChar + (hasComma ? ',' : '');
+
+            // Store original content (all lines from start to end)
+            const originalContent = lines.slice(lineNum, region.end + 1).join('\n');
+            foldedRegions.set(lineNum, { originalContent, placeholder, endLine: region.end });
+
+            // Replace in the textarea
+            const newLines = [
+                ...lines.slice(0, lineNum),
+                placeholder,
+                ...lines.slice(region.end + 1)
+            ];
+            jsonEditor.value = newLines.join('\n');
 
             updateLineNumbers();
             updateSyntaxHighlight();
@@ -2252,65 +2294,13 @@
             const scrollTop = jsonEditor.scrollTop;
             const scrollLeft = jsonEditor.scrollLeft;
 
-            const lines = jsonEditor.value.split('\n');
-            const regions = detectFoldableRegions();
-            const regionsByLine = new Map();
+            // Since the textarea now contains the actual collapsed content,
+            // we just need to highlight it and style the {...} placeholders
+            let highlighted = highlightJSON(jsonEditor.value);
 
-            // Map regions by their start line
-            regions.forEach(region => {
-                regionsByLine.set(region.start, region);
-            });
+            // Style the folded placeholders
+            highlighted = highlighted.replace(/\.\.\.(?=}|])/g, '<span class="folded-placeholder">...</span>');
 
-            // Create visibility map for lines
-            const visibleLines = new Set();
-            for (let i = 0; i < lines.length; i++) {
-                visibleLines.add(i);
-            }
-
-            // Hide lines that are folded
-            foldedRegions.forEach(startLine => {
-                const region = regionsByLine.get(startLine);
-                if (region) {
-                    for (let i = startLine + 1; i <= region.end; i++) {
-                        visibleLines.delete(i);
-                    }
-                }
-            });
-
-            // Build output with folding
-            let outputLines = [];
-            for (let i = 0; i < lines.length; i++) {
-                if (visibleLines.has(i)) {
-                    let line = lines[i];
-
-                    // If this line starts a folded region, add placeholder
-                    if (foldedRegions.has(i)) {
-                        const region = regionsByLine.get(i);
-                        const trimmed = line.trim();
-                        const indent = line.substring(0, line.indexOf(trimmed));
-                        const char = region.type === 'object' ? '{' : '[';
-                        const closeChar = region.type === 'object' ? '}' : ']';
-
-                        // Extract the key if present
-                        const keyMatch = trimmed.match(/^"[^"]*":\s*/);
-                        const key = keyMatch ? keyMatch[0] : '';
-
-                        // Use a special marker that won't be escaped
-                        line = indent + key + char + '___FOLDED___' + closeChar;
-
-                        // Add comma if the original closing line had one
-                        if (lines[region.end].trim().endsWith(',')) {
-                            line += ',';
-                        }
-                    }
-
-                    outputLines.push(line);
-                }
-            }
-
-            // Highlight first, then replace the placeholder
-            let highlighted = highlightJSON(outputLines.join('\n'));
-            highlighted = highlighted.replace(/___FOLDED___/g, '<span class="folded-placeholder">...</span>');
             syntaxHighlight.innerHTML = highlighted;
 
             // Restore scroll position immediately
@@ -2318,10 +2308,39 @@
             syntaxHighlight.scrollLeft = scrollLeft;
         }
 
+        // Get the full JSON content (expanding any collapsed regions)
+        function getFullJSON() {
+            let text = jsonEditor.value;
+
+            // Expand all folded regions from the stored content
+            // We need to rebuild from the foldedRegions map
+            // But since lines shift when we fold, we need to expand in reverse order
+            const foldedArray = Array.from(foldedRegions.entries());
+
+            // Sort by line number descending so we expand from bottom to top
+            foldedArray.sort((a, b) => b[0] - a[0]);
+
+            for (const [lineNum, data] of foldedArray) {
+                const lines = text.split('\n');
+                if (lineNum < lines.length) {
+                    const currentLine = lines[lineNum];
+                    // Check if this line still has the folded placeholder
+                    if (/\{\.\.\.\}|\[\.\.\.\]/.test(currentLine)) {
+                        lines[lineNum] = data.originalContent;
+                        text = lines.join('\n');
+                    }
+                }
+            }
+
+            return text;
+        }
+
         // Validation and Visualisation
         function validateAndVisualize() {
-            const jsonText = jsonEditor.value;
             const statusEl = document.getElementById('validation-status');
+
+            // Get full JSON (expanding any collapsed regions for validation)
+            const jsonText = getFullJSON();
 
             try {
                 currentJSON = JSON.parse(jsonText);
@@ -2409,11 +2428,114 @@
             }
         });
 
+        // Copy event handler - expand collapsed nodes when copying
+        jsonEditor.addEventListener('copy', (e) => {
+            // If no folded regions, let default copy happen
+            if (foldedRegions.size === 0) return;
+
+            const start = jsonEditor.selectionStart;
+            const end = jsonEditor.selectionEnd;
+
+            // If no selection, let default copy happen
+            if (start === end) return;
+
+            const selectedText = jsonEditor.value.substring(start, end);
+
+            // Check if selection contains any collapsed placeholders
+            if (!/\{\.\.\.\}|\[\.\.\.\]/.test(selectedText)) return;
+
+            // Find which line the selection starts on
+            const textBeforeSelection = jsonEditor.value.substring(0, start);
+            const startLineNum = textBeforeSelection.split('\n').length - 1;
+
+            // Expand the selected text by replacing placeholders with original content
+            let expandedText = selectedText;
+            const selectedLines = selectedText.split('\n');
+
+            for (let i = 0; i < selectedLines.length; i++) {
+                const lineNum = startLineNum + i;
+                if (foldedRegions.has(lineNum) && /\{\.\.\.\}|\[\.\.\.\]/.test(selectedLines[i])) {
+                    const stored = foldedRegions.get(lineNum);
+                    if (stored) {
+                        // Replace this line with the original content
+                        selectedLines[i] = stored.originalContent;
+                    }
+                }
+            }
+
+            expandedText = selectedLines.join('\n');
+
+            // Only override if we actually expanded something
+            if (expandedText !== selectedText) {
+                e.preventDefault();
+                e.clipboardData.setData('text/plain', expandedText);
+            }
+        });
+
+        // Cut event handler - expand collapsed nodes when cutting
+        jsonEditor.addEventListener('cut', (e) => {
+            // If no folded regions, let default cut happen
+            if (foldedRegions.size === 0) return;
+
+            const start = jsonEditor.selectionStart;
+            const end = jsonEditor.selectionEnd;
+
+            // If no selection, let default cut happen
+            if (start === end) return;
+
+            const selectedText = jsonEditor.value.substring(start, end);
+
+            // Check if selection contains any collapsed placeholders
+            if (!/\{\.\.\.\}|\[\.\.\.\]/.test(selectedText)) return;
+
+            // Find which line the selection starts on
+            const textBeforeSelection = jsonEditor.value.substring(0, start);
+            const startLineNum = textBeforeSelection.split('\n').length - 1;
+
+            // Expand the selected text by replacing placeholders with original content
+            let expandedText = selectedText;
+            const selectedLines = selectedText.split('\n');
+            const linesToRemove = [];
+
+            for (let i = 0; i < selectedLines.length; i++) {
+                const lineNum = startLineNum + i;
+                if (foldedRegions.has(lineNum) && /\{\.\.\.\}|\[\.\.\.\]/.test(selectedLines[i])) {
+                    const stored = foldedRegions.get(lineNum);
+                    if (stored) {
+                        // Replace this line with the original content
+                        selectedLines[i] = stored.originalContent;
+                        linesToRemove.push(lineNum);
+                    }
+                }
+            }
+
+            expandedText = selectedLines.join('\n');
+
+            // Override the cut behaviour
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', expandedText);
+
+            // Remove the selected text from the editor
+            jsonEditor.value = jsonEditor.value.substring(0, start) + jsonEditor.value.substring(end);
+            jsonEditor.selectionStart = jsonEditor.selectionEnd = start;
+
+            // Clean up folded regions that were cut
+            linesToRemove.forEach(lineNum => foldedRegions.delete(lineNum));
+
+            updateLineNumbers();
+            updateSyntaxHighlight();
+            clearTimeout(validationTimer);
+            validationTimer = setTimeout(validateAndVisualize, 500);
+        });
+
         // Button event listeners
         document.getElementById('format-btn').addEventListener('click', () => {
             try {
-                const formatted = JSON.stringify(JSON.parse(jsonEditor.value), null, 2);
+                // Use full JSON (expanding collapsed regions) for formatting
+                const formatted = JSON.stringify(JSON.parse(getFullJSON()), null, 2);
                 jsonEditor.value = formatted;
+                // Clear folded regions since we're reformatting
+                foldedRegions.clear();
                 // Maintain current scroll position
                 updateLineNumbers();
                 updateSyntaxHighlight();
@@ -2431,6 +2553,8 @@
                     try {
                         const json = JSON.parse(event.target.result);
                         jsonEditor.value = JSON.stringify(json, null, 2);
+                        // Clear folded regions on import
+                        foldedRegions.clear();
                         // Reset scroll position to top
                         jsonEditor.scrollTop = 0;
                         jsonEditor.scrollLeft = 0;
@@ -2448,7 +2572,8 @@
 
         document.getElementById('export-btn').addEventListener('click', () => {
             try {
-                const json = JSON.parse(jsonEditor.value);
+                // Use full JSON (expanding collapsed regions) for export
+                const json = JSON.parse(getFullJSON());
                 const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -2473,8 +2598,11 @@
 
         document.getElementById('collapse-all-btn').addEventListener('click', () => {
             try {
-                const json = JSON.parse(jsonEditor.value);
+                // Use full JSON (expanding collapsed regions first)
+                const json = JSON.parse(getFullJSON());
                 jsonEditor.value = JSON.stringify(json);
+                // Clear folded regions
+                foldedRegions.clear();
                 // Maintain current scroll position
                 updateLineNumbers();
                 updateSyntaxHighlight();
@@ -2485,8 +2613,11 @@
 
         document.getElementById('expand-all-btn').addEventListener('click', () => {
             try {
-                const json = JSON.parse(jsonEditor.value);
+                // Use full JSON (expanding collapsed regions first)
+                const json = JSON.parse(getFullJSON());
                 jsonEditor.value = JSON.stringify(json, null, 2);
+                // Clear folded regions
+                foldedRegions.clear();
                 // Maintain current scroll position
                 updateLineNumbers();
                 updateSyntaxHighlight();
