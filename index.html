@@ -2273,6 +2273,12 @@
         // Detect foldable regions in JSON
         function detectFoldableRegions() {
             const lines = jsonEditor.value.split('\n');
+
+            // Skip fold detection for very large files to prevent crashes
+            if (lines.length > MAX_LINES_FOR_FOLDING) {
+                return [];
+            }
+
             const regions = [];
             const stack = [];
 
@@ -2414,7 +2420,17 @@
         }
 
         // Syntax highlighting function
+        // Performance limits for editor operations
+        const MAX_HIGHLIGHT_SIZE = 50000; // 50KB - disable highlighting for larger files
+        const MAX_LINES_FOR_FOLDING = 2000; // Disable fold icons for files with more lines
+
         function highlightJSON(text) {
+            // Skip highlighting for very large files to prevent crashes
+            if (text.length > MAX_HIGHLIGHT_SIZE) {
+                // Just escape HTML without syntax highlighting
+                return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
             // Escape HTML
             text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -2503,15 +2519,42 @@
             // Get full JSON (expanding any collapsed regions for validation)
             const jsonText = getFullJSON();
 
+            // Check for large file performance mode
+            const isLargeFile = jsonText.length > MAX_HIGHLIGHT_SIZE;
+            const lines = jsonText.split('\n');
+            const hasManyLines = lines.length > MAX_LINES_FOR_FOLDING;
+
             try {
                 currentJSON = JSON.parse(jsonText);
                 statusEl.className = 'status valid';
-                statusEl.textContent = 'Valid JSON';
+
+                // Show performance mode warning for large files
+                if (isLargeFile || hasManyLines) {
+                    statusEl.textContent = 'Valid JSON (large file mode - some features disabled)';
+                } else {
+                    statusEl.textContent = 'Valid JSON';
+                }
 
                 // Update visualisation with current visualiser
+                // Skip visualisation entirely for very large files (>100KB) to prevent crashes
                 const currentVisualizer = visualizers[currentVisualizerType];
                 if (currentVisualizer) {
-                    currentVisualizer.visualize(currentJSON);
+                    if (jsonText.length > 100000) {
+                        currentVisualizer.clear();
+                        // Show message in visualisation area
+                        const graphCanvas = document.getElementById('graph-canvas');
+                        graphCanvas.innerHTML = '<div style="padding: 20px; color: #888; text-align: center;">Visualisation disabled for files larger than 100KB to prevent browser crashes.<br>The JSON is valid and can be edited.</div>';
+                    } else {
+                        // Wrap visualisation in try-catch to prevent crashes
+                        try {
+                            currentVisualizer.visualize(currentJSON);
+                        } catch (vizError) {
+                            console.error('Visualisation error:', vizError);
+                            currentVisualizer.clear();
+                            const graphCanvas = document.getElementById('graph-canvas');
+                            graphCanvas.innerHTML = '<div style="padding: 20px; color: #e9a3a3; text-align: center;">Visualisation failed: ' + vizError.message + '<br>The JSON is valid and can be edited.</div>';
+                        }
+                    }
                 }
 
                 // Schema validation if enabled
