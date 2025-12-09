@@ -2184,6 +2184,10 @@
         let highlightTimer;
         let foldedRegions = new Map(); // Track folded regions: lineNum -> { originalContent, placeholder }
 
+        // Performance limits for editor operations
+        const MAX_HIGHLIGHT_SIZE = 50000; // 50KB - disable highlighting for larger files
+        const MAX_LINES_FOR_FOLDING = 2000; // Disable fold icons for files with more lines
+
         // Initialize editor
         const jsonEditor = document.getElementById('json-editor');
         const lineNumbers = document.getElementById('line-numbers');
@@ -2420,10 +2424,6 @@
         }
 
         // Syntax highlighting function
-        // Performance limits for editor operations
-        const MAX_HIGHLIGHT_SIZE = 50000; // 50KB - disable highlighting for larger files
-        const MAX_LINES_FOR_FOLDING = 2000; // Disable fold icons for files with more lines
-
         function highlightJSON(text) {
             // Skip highlighting for very large files to prevent crashes
             if (text.length > MAX_HIGHLIGHT_SIZE) {
