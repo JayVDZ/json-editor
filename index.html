@@ -752,7 +752,51 @@
                 this.edges = [];
             }
 
+            // Performance limits to prevent browser crashes
+            static MAX_NODES = 500;
+            static MAX_DEPTH = 20;
+
             parseJSON(data, key = 'root', parent = null, depth = 0) {
+                // Prevent stack overflow and excessive node creation
+                if (depth > GraphVisualizer.MAX_DEPTH) {
+                    const nodeId = this.nodes.length;
+                    this.nodes.push({
+                        id: nodeId,
+                        key,
+                        value: '... (depth limit)',
+                        type: 'truncated',
+                        depth,
+                        x: 0,
+                        y: 0,
+                        parent
+                    });
+                    if (parent !== null) {
+                        this.edges.push({ from: parent, to: nodeId });
+                    }
+                    return nodeId;
+                }
+
+                if (this.nodes.length >= GraphVisualizer.MAX_NODES) {
+                    if (this.nodes.length === GraphVisualizer.MAX_NODES) {
+                        // Add one final node indicating truncation
+                        const nodeId = this.nodes.length;
+                        this.nodes.push({
+                            id: nodeId,
+                            key: '...',
+                            value: `(${GraphVisualizer.MAX_NODES} node limit)`,
+                            type: 'truncated',
+                            depth,
+                            x: 0,
+                            y: 0,
+                            parent
+                        });
+                        if (parent !== null) {
+                            this.edges.push({ from: parent, to: nodeId });
+                        }
+                    }
+                    return this.nodes.length - 1;
+                }
+
                 const nodeId = this.nodes.length;
                 const type = Array.isArray(data) ? 'array' :
                            data === null ? 'null' : typeof data;
@@ -792,14 +836,18 @@
                     this.edges.push({ from: parent, to: nodeId });
                 }
 
-                if (hasChildren) {
+                if (hasChildren && this.nodes.length < GraphVisualizer.MAX_NODES) {
                     if (type === 'array') {
                         data.forEach((item, index) => {
-                            this.parseJSON(item, `[${index}]`, nodeId, depth + 1);
+                            if (this.nodes.length < GraphVisualizer.MAX_NODES) {
+                                this.parseJSON(item, `[${index}]`, nodeId, depth + 1);
+                            }
                         });
                     } else {
                         Object.entries(data).forEach(([k, v]) => {
-                            this.parseJSON(v, k, nodeId, depth + 1);
+                            if (this.nodes.length < GraphVisualizer.MAX_NODES) {
+                                this.parseJSON(v, k, nodeId, depth + 1);
+                            }
                         });
                     }
                 }
@@ -998,11 +1046,49 @@
                 this.svgContainer.innerHTML = '';
             }
 
+            // Performance limits to prevent browser crashes
+            static MAX_NODES = 500;
+            static MAX_DEPTH = 20;
+
             parseJSON(data, key = 'root', parent = null, depth = 0) {
                 const nodes = [];
                 const links = [];
+                const MAX_NODES = D3ForceGraphVisualizer.MAX_NODES;
+                const MAX_DEPTH = D3ForceGraphVisualizer.MAX_DEPTH;
 
                 const traverse = (obj, key, parent, depth) => {
+                    // Enforce node limit
+                    if (nodes.length >= MAX_NODES) {
+                        if (nodes.length === MAX_NODES) {
+                            nodes.push({
+                                id: nodes.length,
+                                key: '...',
+                                value: `(${MAX_NODES} node limit)`,
+                                type: 'truncated',
+                                depth
+                            });
+                            if (parent !== null) {
+                                links.push({ source: parent, target: nodes.length - 1 });
+                            }
+                        }
+                        return;
+                    }
+
+                    // Enforce depth limit
+                    if (depth > MAX_DEPTH) {
+                        nodes.push({
+                            id: nodes.length,
+                            key,
+                            value: '... (depth limit)',
+                            type: 'truncated',
+                            depth
+                        });
+                        if (parent !== null) {
+                            links.push({ source: parent, target: nodes.length - 1 });
+                        }
+                        return;
+                    }
+
                     const nodeId = nodes.length;
                     const type = Array.isArray(obj) ? 'array' :
                                 obj === null ? 'null' : typeof obj;
@@ -1039,14 +1125,18 @@
                         links.push({ source: parent, target: nodeId });
                     }
 
-                    if (hasChildren) {
+                    if (hasChildren && nodes.length < MAX_NODES) {
                         if (type === 'array') {
                             obj.forEach((item, index) => {
-                                traverse(item, `[${index}]`, nodeId, depth + 1);
+                                if (nodes.length < MAX_NODES) {
+                                    traverse(item, `[${index}]`, nodeId, depth + 1);
+                                }
                             });
                         } else {
                             Object.entries(obj).forEach(([k, v]) => {
-                                traverse(v, k, nodeId, depth + 1);
+                                if (nodes.length < MAX_NODES) {
+                                    traverse(v, k, nodeId, depth + 1);
+                                }
                             });
                         }
                     }
@@ -1206,6 +1296,10 @@
 
         // D3 Treemap Visualiser
         class D3TreemapVisualizer {
+            // Performance limits to prevent browser crashes
+            static MAX_NODES = 500;
+            static MAX_DEPTH = 20;
+
             constructor(container, svgContainer) {
                 this.container = container;
                 this.svgContainer = svgContainer;
@@ -1216,6 +1310,7 @@
                 this.zoomBehavior = null;
                 this.currentTransform = null;
                 this.currentG = null;
+                this.nodeCount = 0;
             }
 
             clear() {
@@ -1245,7 +1340,36 @@
 
             // Convert JSON to hierarchical structure for D3
             jsonToHierarchy(data, key = 'root') {
-                const traverse = (obj, name) => {
+                this.nodeCount = 0;
+                let limitReached = false;
+
+                const traverse = (obj, name, depth = 0) => {
+                    // Check depth limit
+                    if (depth > D3TreemapVisualizer.MAX_DEPTH) {
+                        return {
+                            name: '⚠️ Max depth exceeded',
+                            type: 'null',
+                            value: null,
+                            size: 1
+                        };
+                    }
+
+                    // Check node limit
+                    if (this.nodeCount >= D3TreemapVisualizer.MAX_NODES) {
+                        if (!limitReached) {
+                            limitReached = true;
+                            return {
+                                name: `⚠️ Limited to ${D3TreemapVisualizer.MAX_NODES} nodes`,
+                                type: 'null',
+                                value: null,
+                                size: 1
+                            };
+                        }
+                        return null;
+                    }
+
+                    this.nodeCount++;
+
                     const type = Array.isArray(obj) ? 'array' :
                                 obj === null ? 'null' : typeof obj;
 
@@ -1259,7 +1383,8 @@
 
                     if (type === 'object') {
                         Object.entries(obj).forEach(([k, v]) => {
-                            node.children.push(traverse(v, k));
+                            const child = traverse(v, k, depth + 1);
+                            if (child) node.children.push(child);
                         });
                         // Size is sum of children or key count if no children
                         node.size = node.children.length > 0 ?
@@ -1267,7 +1392,8 @@
                             Object.keys(obj).length || 1;
                     } else if (type === 'array') {
                         obj.forEach((item, index) => {
-                            node.children.push(traverse(item, `[${index}]`));
+                            const child = traverse(item, `[${index}]`, depth + 1);
+                            if (child) node.children.push(child);
                         });
                         // Size is sum of children or array length
                         node.size = node.children.length > 0 ?
@@ -1282,7 +1408,7 @@
                     return node;
                 };
 
-                return traverse(data, key);
+                return traverse(data, key, 0);
             }
 
             // Get colour based on type and depth
@@ -1774,12 +1900,17 @@
 
         // D3 Sunburst Diagram Visualiser - circular hierarchy
         class D3SunburstVisualiser {
+            // Performance limits to prevent browser crashes
+            static MAX_NODES = 500;
+            static MAX_DEPTH = 20;
+
             constructor(container, svgContainer) {
                 this.container = container;
                 this.svgContainer = svgContainer;
                 this.svg = null;
                 this.currentRoot = null;
                 this.zoomBehavior = null;
+                this.nodeCount = 0;
             }
 
             clear() {
@@ -1793,7 +1924,36 @@
 
             // Convert JSON to hierarchical structure for D3
             jsonToHierarchy(data, key = 'root') {
-                const traverse = (obj, name) => {
+                this.nodeCount = 0;
+                let limitReached = false;
+
+                const traverse = (obj, name, depth = 0) => {
+                    // Check depth limit
+                    if (depth > D3SunburstVisualiser.MAX_DEPTH) {
+                        return {
+                            name: '⚠️ Max depth exceeded',
+                            type: 'null',
+                            value: null,
+                            size: 1
+                        };
+                    }
+
+                    // Check node limit
+                    if (this.nodeCount >= D3SunburstVisualiser.MAX_NODES) {
+                        if (!limitReached) {
+                            limitReached = true;
+                            return {
+                                name: `⚠️ Limited to ${D3SunburstVisualiser.MAX_NODES} nodes`,
+                                type: 'null',
+                                value: null,
+                                size: 1
+                            };
+                        }
+                        return null;
+                    }
+
+                    this.nodeCount++;
+
                     const type = Array.isArray(obj) ? 'array' :
                                 obj === null ? 'null' : typeof obj;
 
@@ -1807,7 +1967,8 @@
 
                     if (type === 'object') {
                         Object.entries(obj).forEach(([k, v]) => {
-                            node.children.push(traverse(v, k));
+                            const child = traverse(v, k, depth + 1);
+                            if (child) node.children.push(child);
                         });
                         // Size is sum of children or key count
                         node.size = node.children.length > 0 ?
@@ -1815,7 +1976,8 @@
                             Object.keys(obj).length || 1;
                     } else if (type === 'array') {
                         obj.forEach((item, index) => {
-                            node.children.push(traverse(item, `[${index}]`));
+                            const child = traverse(item, `[${index}]`, depth + 1);
+                            if (child) node.children.push(child);
                         });
                         // Size is sum of children or array length
                         node.size = node.children.length > 0 ?
@@ -1830,7 +1992,7 @@
                     return node;
                 };
 
-                return traverse(data, key);
+                return traverse(data, key, 0);
             }
 
             // Get colour based on type and depth
@@ -2181,10 +2343,8 @@
 
             lineNumbers.innerHTML = html;
 
-            // Add click listeners to fold icons
-            document.querySelectorAll('.fold-icon').forEach(icon => {
-                icon.addEventListener('click', handleFoldClick);
-            });
+            // Use event delegation on the lineNumbers container instead of individual listeners
+            // This prevents memory leaks from accumulating listeners on every update
         }
 
         // Handle fold icon clicks
@@ -2402,14 +2562,36 @@
             syntaxHighlight.scrollLeft = jsonEditor.scrollLeft;
         }
 
-        // Editor event listeners
+        // Event delegation for fold icons - single listener instead of per-icon
+        // This prevents memory leaks from accumulating listeners on every update
+        lineNumbers.addEventListener('click', (e) => {
+            if (e.target.classList.contains('fold-icon')) {
+                handleFoldClick(e);
+            }
+        });
+
+        // Debounce timers for expensive operations
+        let lineNumberTimer;
+        let syntaxHighlightTimer;
+
+        // Editor event listeners with debouncing for performance
         jsonEditor.addEventListener('input', () => {
-            updateLineNumbers();
-            updateSyntaxHighlight();
-            // Use requestAnimationFrame to ensure DOM has updated before syncing
-            requestAnimationFrame(() => {
-                syncScroll();
-            });
+            // Debounce line numbers update (100ms)
+            clearTimeout(lineNumberTimer);
+            lineNumberTimer = setTimeout(() => {
+                updateLineNumbers();
+            }, 100);
+
+            // Debounce syntax highlighting (50ms)
+            clearTimeout(syntaxHighlightTimer);
+            syntaxHighlightTimer = setTimeout(() => {
+                updateSyntaxHighlight();
+                requestAnimationFrame(() => {
+                    syncScroll();
+                });
+            }, 50);
+
+            // Debounce validation (500ms) - already existed
             clearTimeout(validationTimer);
             validationTimer = setTimeout(validateAndVisualize, 500);
         });
