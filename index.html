@@ -2436,8 +2436,9 @@
 
             // Tokenize and highlight JSON
             // Match: "key": or "string" or number or boolean or null or punctuation
-            text = text.replace(/"(?:\\.|[^"\\])*"\s*:|"(?:\\.|[^"\\])*"|\b-?\d+\.?\d*\b|\btrue\b|\bfalse\b|\bnull\b|[{}[\]:,]/g, function(match) {
-                if (/"(?:\\.|[^"\\])*"\s*:/.test(match)) {
+            // Using simpler regex patterns to avoid catastrophic backtracking
+            text = text.replace(/"[^"\\]*(?:\\.[^"\\]*)*"\s*:|"[^"\\]*(?:\\.[^"\\]*)*"|-?\d+\.?\d*(?:[eE][+-]?\d+)?|\btrue\b|\bfalse\b|\bnull\b|[{}[\]:,]/g, function(match) {
+                if (match.endsWith(':')) {
                     // Key-value pair - preserve whitespace after colon
                     const colonIndex = match.indexOf(':');
                     const key = match.substring(0, colonIndex);
@@ -2446,8 +2447,8 @@
                 } else if (match.startsWith('"')) {
                     // String value
                     return '<span class="json-string">' + match + '</span>';
-                } else if (/^-?\d+\.?\d*$/.test(match)) {
-                    // Number
+                } else if (/^-?\d/.test(match)) {
+                    // Number (including scientific notation)
                     return '<span class="json-number">' + match + '</span>';
                 } else if (match === 'true' || match === 'false') {
                     // Boolean
