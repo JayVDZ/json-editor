@@ -135,6 +135,56 @@ All CSS is inline in `<style>` tags. Key classes:
 
 ## Common Tasks
 
+### Creating GitHub Releases
+
+When creating a new GitHub release, always use rich, detailed release notes following this structure:
+
+1. **Header**: `## JSON Editor - vX.Y.Z` with brief description
+2. **Installation**: Standard 3-step instructions with download filename
+3. **What's New**: Detailed sections for each change with:
+   - Emoji prefix for category (🐛 Bug Fix, ⚡ Performance, ✨ Feature, etc.)
+   - Bold subheadings for features
+   - Bullet points explaining changes
+   - Code examples or tables where helpful
+4. **Technical Details**: Implementation notes for developers
+5. **Full Changelog**: Link to GitHub compare URL
+6. **Footer**: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+
+**Important**: Always use `gh release edit <tag> -F <notes-file>` to update release notes from a file. Do NOT rely on inline notes which may be truncated or replaced by templates.
+
+**Do NOT include**: A "Previous Releases" section listing older versions.
+
+Example release notes structure:
+```markdown
+## JSON Editor - v1.6.1
+
+Offline JSON editor with syntax highlighting...
+
+### Installation
+1. Download `json-editor-v1.6.1.zip`
+2. Extract the archive
+3. Open `index.html` in your browser
+
+### What's New
+
+#### 🐛 Bug Fix Title
+Description of the fix...
+
+#### ⚡ Performance Improvements
+**Feature Name**
+- Bullet point details
+- More details
+
+### Technical Details
+- Implementation notes...
+
+**Full Changelog**: https://github.com/JayVDZ/json-editor/compare/vX.Y.Z...vA.B.C
+
+---
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
 ### Testing Offline
 1. Open `index.html` in Edge browser
 2. Disconnect from internet
